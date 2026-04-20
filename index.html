@@ -53,15 +53,7 @@
       padding:16px;
       box-shadow:0 10px 30px rgba(0,0,0,.25);
     }
-    .control-row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-    button, input{
-      font:inherit;
-    }
+    button, input{ font:inherit; }
     .btn{
       border:none;
       border-radius:12px;
@@ -73,7 +65,12 @@
     }
     .btn:hover{transform:translateY(-1px); filter:brightness(1.06)}
     .btn.secondary{background:#374151}
-    .btn.toggle.active{background:#0ea5e9}
+    .control-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
     .round-box{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -114,23 +111,50 @@
       font-size:14px;
     }
     .swatch{
-      width:14px;
-      height:14px;
+      width:14px; height:14px;
       border-radius:50%;
       flex:0 0 14px;
     }
     .swatch.force{background:var(--force)}
     .swatch.field{background:var(--field)}
     .swatch.current{background:var(--current)}
+    .canvas-wrap{
+      position:relative;
+      width:100%;
+    }
     canvas{
       width:100%;
       height:auto;
-      background:
-        radial-gradient(circle at top, rgba(56,189,248,.08), transparent 35%),
-        linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.98));
+      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.98));
       border:1px solid #1e293b;
       border-radius:16px;
       display:block;
+    }
+    /* Overlay tick/cross on top of canvas */
+    .feedback-overlay{
+      position:absolute;
+      top:0; left:0; right:0; bottom:0;
+      display:none;
+      justify-content:center;
+      align-items:center;
+      border-radius:16px;
+      pointer-events:none;
+    }
+    .feedback-overlay.show{ display:flex; }
+    .feedback-overlay .mark{
+      font-size:200px;
+      line-height:1;
+      font-weight:900;
+      filter: drop-shadow(0 0 30px currentColor);
+      animation: popIn .18s cubic-bezier(.3,1.4,.6,1) both;
+    }
+    .feedback-overlay.correct{ background:rgba(0,0,0,.18); }
+    .feedback-overlay.correct .mark{ color:#22c55e; }
+    .feedback-overlay.wrong{ background:rgba(0,0,0,.18); }
+    .feedback-overlay.wrong .mark{ color:#ef4444; }
+    @keyframes popIn{
+      from{transform:scale(0.4);opacity:0}
+      to{transform:scale(1);opacity:1}
     }
     .question{
       margin:12px 0 14px;
@@ -166,15 +190,13 @@
       background:#273449;
       border-color:#475569;
     }
-    .choice .symbol{
-      font-size:24px;
-      font-weight:700;
+    .choice:disabled{
+      opacity:.4;
+      cursor:not-allowed;
+      transform:none;
     }
-    .choice .name{
-      font-size:13px;
-      color:#cbd5e1;
-      text-align:center;
-    }
+    .choice .symbol{ font-size:24px; font-weight:700; }
+    .choice .name{ font-size:13px; color:#cbd5e1; text-align:center; }
     .status{
       min-height:46px;
       display:flex;
@@ -186,14 +208,8 @@
       border:1px solid #1e293b;
       color:#e2e8f0;
     }
-    .status.good{
-      border-color:rgba(34,197,94,.5);
-      color:#bbf7d0;
-    }
-    .status.bad{
-      border-color:rgba(239,68,68,.5);
-      color:#fecaca;
-    }
+    .status.good{ border-color:rgba(34,197,94,.5); color:#bbf7d0; }
+    .status.bad{ border-color:rgba(239,68,68,.5); color:#fecaca; }
     .footer-note{
       color:var(--muted);
       margin-top:10px;
@@ -211,16 +227,91 @@
       margin-right:8px;
       margin-bottom:6px;
     }
-    .finish-box{
-      margin-top:12px;
-      padding:12px 14px;
-      border-radius:12px;
-      background:#052e16;
-      border:1px solid #166534;
-      color:#dcfce7;
+
+    /* ===== SUMMARY SCREEN ===== */
+    #summaryScreen{
       display:none;
-      line-height:1.5;
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,.95);
+      z-index:100;
+      justify-content:center;
+      align-items:center;
+      backdrop-filter:blur(6px);
     }
+    #summaryScreen.show{ display:flex; }
+    .summary-card{
+      background:#111827;
+      border:1px solid #1e293b;
+      border-radius:24px;
+      padding:40px 48px;
+      max-width:480px;
+      width:90%;
+      text-align:center;
+      box-shadow:0 30px 80px rgba(0,0,0,.6);
+      animation: popIn .25s cubic-bezier(.3,1.4,.6,1) both;
+    }
+    .summary-card h2{
+      margin:0 0 8px;
+      font-size:32px;
+      color:#f8fafc;
+    }
+    .summary-card .trophy{
+      font-size:72px;
+      line-height:1.2;
+      margin-bottom:10px;
+    }
+    .summary-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin:24px 0;
+    }
+    .summary-stat{
+      background:#1f2937;
+      border:1px solid #273449;
+      border-radius:14px;
+      padding:16px 10px;
+    }
+    .summary-stat .s-label{
+      font-size:12px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      margin-bottom:8px;
+    }
+    .summary-stat .s-value{
+      font-size:30px;
+      font-weight:700;
+      color:#f8fafc;
+    }
+    .summary-card .play-again{
+      margin-top:8px;
+      padding:14px 32px;
+      font-size:17px;
+      border-radius:14px;
+      background:#2563eb;
+      color:white;
+      border:none;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .summary-card .play-again:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+    .accuracy-bar-wrap{
+      background:#0b1220;
+      border-radius:999px;
+      height:10px;
+      margin:8px 0 20px;
+      overflow:hidden;
+      border:1px solid #1e293b;
+    }
+    .accuracy-bar{
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, #22c55e, #38bdf8);
+      transition:width .5s ease;
+    }
+
     @media (max-width: 900px){
       .grid{grid-template-columns:1fr}
       .choices{grid-template-columns:repeat(2, 1fr)}
@@ -228,636 +319,522 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Magnetic Force Direction Game</h1>
-    <p class="subtitle">
-      Practise the motor effect by finding the missing direction among <strong>F</strong> (force), <strong>B</strong> (magnetic field), and <strong>I</strong> (conventional current).
-      Two directions are shown each round, and you must choose the third from six possible directions.
-    </p>
 
-    <div class="grid">
-      <div class="panel">
-        <div class="control-row">
-          <label style="display:flex;align-items:center;gap:8px;background:#0b1220;border:1px solid #1e293b;padding:10px 12px;border-radius:12px;">
-            <span style="color:var(--muted);font-size:14px;">Rounds</span>
-            <input id="roundInput" type="number" min="1" max="50" value="10"
-              style="width:70px;background:#111827;border:1px solid #334155;color:white;border-radius:8px;padding:6px 8px;">
-          </label>
-          <button class="btn" id="startBtn">Start</button>
-          <button class="btn secondary toggle active" id="viewBtn">View: 3D</button>
+<!-- ===== SUMMARY OVERLAY ===== -->
+<div id="summaryScreen">
+  <div class="summary-card">
+    <div class="trophy">🏆</div>
+    <h2>Game Complete!</h2>
+    <p style="color:var(--muted);margin:0 0 4px">You completed 5 correct rounds</p>
+    <div class="accuracy-bar-wrap">
+      <div class="accuracy-bar" id="accuracyBar" style="width:0%"></div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="s-label">Final Time</div>
+        <div class="s-value" id="sumTime">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="s-label">Total Attempts</div>
+        <div class="s-value" id="sumAttempts">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="s-label">Accuracy</div>
+        <div class="s-value" id="sumAccuracy">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="s-label">Wrong Answers</div>
+        <div class="s-value" id="sumWrong">—</div>
+      </div>
+    </div>
+    <button class="play-again" id="playAgainBtn">Play Again</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>Magnetic Force Direction Game</h1>
+  <p class="subtitle">
+    Practise the motor effect (Fleming's Left-Hand Rule). Two directions among <strong>F</strong>, <strong>B</strong>, and <strong>I</strong> are shown — find the third. Complete <strong>5 correct rounds</strong> as fast as you can!
+  </p>
+
+  <div class="grid">
+    <!-- LEFT PANEL -->
+    <div class="panel">
+      <div class="control-row">
+        <button class="btn" id="startBtn">▶ Start</button>
+        <button class="btn secondary" id="resetBtn">↺ Reset</button>
+      </div>
+
+      <div class="round-box">
+        <div class="stat">
+          <div class="label">Round</div>
+          <div class="value" id="roundDisplay">0 / 5</div>
         </div>
-
-        <div class="round-box">
-          <div class="stat">
-            <div class="label">Round</div>
-            <div class="value" id="roundDisplay">0 / 0</div>
-          </div>
-          <div class="stat">
-            <div class="label">Time</div>
-            <div class="value" id="timeDisplay">00:00.0</div>
-          </div>
-          <div class="stat">
-            <div class="label">Correct</div>
-            <div class="value" id="correctDisplay">0</div>
-          </div>
-          <div class="stat">
-            <div class="label">Attempts</div>
-            <div class="value" id="attemptDisplay">0</div>
-          </div>
+        <div class="stat">
+          <div class="label">Time</div>
+          <div class="value" id="timeDisplay">00:00.0</div>
         </div>
-
-        <div class="question" id="questionText">
-          Press <strong>Start</strong> to begin. The timer starts when the button is pressed.
+        <div class="stat">
+          <div class="label">Correct</div>
+          <div class="value" id="correctDisplay">0</div>
         </div>
-
-        <div class="choices" id="choices"></div>
-
-        <div class="status" id="statusBox">
-          Ready to play.
-        </div>
-
-        <div class="finish-box" id="finishBox"></div>
-
-        <div class="legend">
-          <div class="legend-item"><span class="swatch force"></span> F = magnetic force on the wire</div>
-          <div class="legend-item"><span class="swatch field"></span> B = magnetic field direction</div>
-          <div class="legend-item"><span class="swatch current"></span> I = conventional current direction</div>
-        </div>
-
-        <div class="footer-note">
-          <span class="pill">6 choices</span>
-          <span class="pill">2D / 3D view</span>
-          <span class="pill">Wrong answer = same round</span>
+        <div class="stat">
+          <div class="label">Attempts</div>
+          <div class="value" id="attemptDisplay">0</div>
         </div>
       </div>
 
-      <div class="panel">
+      <div class="question" id="questionText">
+        Press <strong>▶ Start</strong> to begin. Timer starts immediately.
+      </div>
+
+      <div class="choices" id="choices"></div>
+
+      <div class="status" id="statusBox">Ready to play.</div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch force"></span> F — magnetic force on the wire</div>
+        <div class="legend-item"><span class="swatch field"></span> B — magnetic field direction</div>
+        <div class="legend-item"><span class="swatch current"></span> I — conventional current direction</div>
+      </div>
+
+      <div class="footer-note">
+        <span class="pill">5 correct = win</span>
+        <span class="pill">Wrong = new question, same round</span>
+        <span class="pill">• = out of page &nbsp; × = into page</span>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Canvas -->
+    <div class="panel" style="padding:0;overflow:hidden;">
+      <div class="canvas-wrap">
         <canvas id="scene" width="820" height="520"></canvas>
+        <div class="feedback-overlay" id="feedbackOverlay">
+          <span class="mark" id="feedbackMark"></span>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const DIRS = {
-      PX: { key: "PX", name: "Right", short: "+x", symbol: "→", vec: [1, 0, 0] },
-      NX: { key: "NX", name: "Left", short: "-x", symbol: "←", vec: [-1, 0, 0] },
-      PY: { key: "PY", name: "Up", short: "+y", symbol: "↑", vec: [0, 1, 0] },
-      NY: { key: "NY", name: "Down", short: "-y", symbol: "↓", vec: [0, -1, 0] },
-      PZ: { key: "PZ", name: "Out of page", short: "+z", symbol: "•", vec: [0, 0, 1] },
-      NZ: { key: "NZ", name: "Into page", short: "-z", symbol: "×", vec: [0, 0, -1] }
-    };
+<script>
+  // ─── Direction definitions ────────────────────────────────────────────────
+  const DIRS = {
+    PX: { key:"PX", name:"Right",       short:"+x", symbol:"→", vec:[1,0,0]  },
+    NX: { key:"NX", name:"Left",        short:"-x", symbol:"←", vec:[-1,0,0] },
+    PY: { key:"PY", name:"Up",          short:"+y", symbol:"↑", vec:[0,1,0]  },
+    NY: { key:"NY", name:"Down",        short:"-y", symbol:"↓", vec:[0,-1,0] },
+    PZ: { key:"PZ", name:"Out of page", short:"+z", symbol:"⊙", vec:[0,0,1]  },
+    NZ: { key:"NZ", name:"Into page",   short:"-z", symbol:"⊗", vec:[0,0,-1] },
+  };
 
-    const COLORS = {
-      F: getCSS("--force"),
-      B: getCSS("--field"),
-      I: getCSS("--current")
-    };
+  const COLORS  = { F:"#f59e0b", B:"#06b6d4", I:"#a78bfa" };
+  const LABELS  = { F:"Force (F)", B:"Magnetic field (B)", I:"Current (I)" };
 
-    const LABELS = {
-      F: "Force (F)",
-      B: "Magnetic field (B)",
-      I: "Current (I)"
-    };
+  const WIN_ROUNDS = 5;
 
-    const canvas = document.getElementById("scene");
-    const ctx = canvas.getContext("2d");
+  // ─── DOM refs ────────────────────────────────────────────────────────────
+  const canvas          = document.getElementById("scene");
+  const ctx             = canvas.getContext("2d");
+  const startBtn        = document.getElementById("startBtn");
+  const resetBtn        = document.getElementById("resetBtn");
+  const questionText    = document.getElementById("questionText");
+  const roundDisplay    = document.getElementById("roundDisplay");
+  const timeDisplay     = document.getElementById("timeDisplay");
+  const correctDisplay  = document.getElementById("correctDisplay");
+  const attemptDisplay  = document.getElementById("attemptDisplay");
+  const statusBox       = document.getElementById("statusBox");
+  const choicesBox      = document.getElementById("choices");
+  const feedbackOverlay = document.getElementById("feedbackOverlay");
+  const feedbackMark    = document.getElementById("feedbackMark");
+  const summaryScreen   = document.getElementById("summaryScreen");
+  const sumTime         = document.getElementById("sumTime");
+  const sumAttempts     = document.getElementById("sumAttempts");
+  const sumAccuracy     = document.getElementById("sumAccuracy");
+  const sumWrong        = document.getElementById("sumWrong");
+  const accuracyBar     = document.getElementById("accuracyBar");
+  const playAgainBtn    = document.getElementById("playAgainBtn");
 
-    const roundInput = document.getElementById("roundInput");
-    const startBtn = document.getElementById("startBtn");
-    const viewBtn = document.getElementById("viewBtn");
-    const questionText = document.getElementById("questionText");
-    const roundDisplay = document.getElementById("roundDisplay");
-    const timeDisplay = document.getElementById("timeDisplay");
-    const correctDisplay = document.getElementById("correctDisplay");
-    const attemptDisplay = document.getElementById("attemptDisplay");
-    const statusBox = document.getElementById("statusBox");
-    const choicesBox = document.getElementById("choices");
-    const finishBox = document.getElementById("finishBox");
+  // ─── State ───────────────────────────────────────────────────────────────
+  let round=0, correct=0, attempts=0, wrongCount=0;
+  let started=false, finished=false, locked=false;
+  let startTime=0, elapsedMs=0, timerId=null;
+  let currentQuestion=null;
 
-    let totalRounds = 10;
-    let round = 0;
-    let correct = 0;
-    let attempts = 0;
-    let started = false;
-    let finished = false;
-    let locked = false;
-    let viewMode = "3d";
-    let startTime = 0;
-    let timerId = null;
-    let elapsedMs = 0;
+  // ─── Init ────────────────────────────────────────────────────────────────
+  buildChoiceButtons();
+  drawIdle();
 
-    let currentQuestion = null;
+  startBtn.addEventListener("click", startGame);
+  resetBtn.addEventListener("click", resetGame);
+  playAgainBtn.addEventListener("click", () => {
+    summaryScreen.classList.remove("show");
+    resetGame();
+  });
 
-    buildChoices();
+  // ─── Game flow ───────────────────────────────────────────────────────────
+  function startGame(){
+    round=1; correct=0; attempts=0; wrongCount=0;
+    started=true; finished=false; locked=false;
+    elapsedMs=0;
+    startTime = performance.now();
+    summaryScreen.classList.remove("show");
+    setStatus("Game started! Find the missing direction.", "");
+    updateStats();
+    startTimer();
+    generateQuestion();
+  }
+
+  function resetGame(){
+    stopTimer();
+    round=0; correct=0; attempts=0; wrongCount=0;
+    started=false; finished=false; locked=false; elapsedMs=0;
+    currentQuestion=null;
+    timeDisplay.textContent="00:00.0";
+    roundDisplay.textContent=`0 / ${WIN_ROUNDS}`;
+    correctDisplay.textContent="0";
+    attemptDisplay.textContent="0";
+    questionText.innerHTML="Press <strong>▶ Start</strong> to begin. Timer starts immediately.";
+    setStatus("Ready to play.","");
+    hideOverlay();
     drawIdle();
+    enableChoices(false);
+  }
 
-    startBtn.addEventListener("click", startGame);
-    viewBtn.addEventListener("click", () => {
-      viewMode = viewMode === "3d" ? "2d" : "3d";
-      viewBtn.textContent = `View: ${viewMode.toUpperCase()}`;
-      viewBtn.classList.toggle("active", true);
-      drawScene();
+  function finishGame(){
+    finished=true; started=false; locked=true;
+    stopTimer();
+    const accuracy = attempts > 0 ? Math.round(WIN_ROUNDS / attempts * 100) : 100;
+    sumTime.textContent     = formatTime(elapsedMs);
+    sumAttempts.textContent = String(attempts);
+    sumAccuracy.textContent = accuracy + "%";
+    sumWrong.textContent    = String(wrongCount);
+    accuracyBar.style.width = accuracy + "%";
+    summaryScreen.classList.add("show");
+  }
+
+  function generateQuestion(){
+    if(!started || finished) return;
+
+    const dirList = Object.values(DIRS);
+
+    // pick I, then B perpendicular to I, compute F = I × B
+    const I = randFrom(dirList);
+    const Bopts = dirList.filter(d => dot(d.vec, I.vec) === 0);
+    const B = randFrom(Bopts);
+    const Fvec = cross(I.vec, B.vec);
+    const F = dirFromVec(Fvec);
+
+    const unknown = randFrom(["F","B","I"]);
+    currentQuestion = { F, B, I, unknown,
+      shown: ["F","B","I"].filter(k=>k!==unknown),
+      correctKey: {F:F.key, B:B.key, I:I.key}[unknown]
+    };
+
+    questionText.innerHTML =
+      `Round <strong>${round}</strong> of <strong>${WIN_ROUNDS}</strong><br>
+       Two directions are shown. Choose the missing direction for
+       <strong>${LABELS[unknown]}</strong>.`;
+
+    enableChoices(true);
+    updateStats();
+    hideOverlay();
+    drawScene();
+  }
+
+  function submitAnswer(key){
+    if(!started || finished || locked || !currentQuestion) return;
+    attempts++;
+    locked=true;
+    enableChoices(false);
+    const isCorrect = (key === currentQuestion.correctKey);
+
+    if(isCorrect){
+      correct++;
+      showOverlay(true);
+      setStatus(`✓ Correct! ${LABELS[currentQuestion.unknown]} is ${DIRS[key].name}.`, "good");
+      round++;
+      updateStats();
+      setTimeout(()=>{
+        hideOverlay();
+        if(correct >= WIN_ROUNDS){
+          finishGame();
+        } else {
+          locked=false;
+          generateQuestion();
+        }
+      }, 900);
+    } else {
+      wrongCount++;
+      showOverlay(false);
+      setStatus(`✗ Wrong. That direction is not correct. Try a new question.`, "bad");
+      updateStats();
+      setTimeout(()=>{
+        hideOverlay();
+        locked=false;
+        generateQuestion(); // same round number, new orientation
+      }, 900);
+    }
+  }
+
+  // ─── Timer ───────────────────────────────────────────────────────────────
+  function startTimer(){
+    stopTimer();
+    timerId = setInterval(()=>{
+      if(!started||finished) return;
+      elapsedMs = performance.now() - startTime;
+      timeDisplay.textContent = formatTime(elapsedMs);
+    }, 100);
+  }
+  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+
+  // ─── UI helpers ──────────────────────────────────────────────────────────
+  function updateStats(){
+    roundDisplay.textContent  = `${Math.min(round, WIN_ROUNDS)} / ${WIN_ROUNDS}`;
+    correctDisplay.textContent= String(correct);
+    attemptDisplay.textContent= String(attempts);
+  }
+
+  function setStatus(text, type){
+    statusBox.textContent = text;
+    statusBox.className = "status";
+    if(type) statusBox.classList.add(type);
+  }
+
+  function showOverlay(isCorrect){
+    feedbackOverlay.className = "feedback-overlay show " + (isCorrect?"correct":"wrong");
+    feedbackMark.textContent  = isCorrect ? "✓" : "✗";
+  }
+  function hideOverlay(){
+    feedbackOverlay.className = "feedback-overlay";
+  }
+
+  function enableChoices(on){
+    choicesBox.querySelectorAll(".choice").forEach(b=>{ b.disabled=!on; });
+  }
+
+  function buildChoiceButtons(){
+    const order = ["PX","NX","PY","NY","PZ","NZ"];
+    choicesBox.innerHTML="";
+    order.forEach(key=>{
+      const d = DIRS[key];
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.disabled  = true;
+      btn.innerHTML =
+        `<div class="symbol">${d.symbol}</div>
+         <div class="name">${d.name}<br><span style="color:#94a3b8">${d.short}</span></div>`;
+      btn.addEventListener("click", ()=>submitAnswer(key));
+      choicesBox.appendChild(btn);
+    });
+  }
+
+  // ─── Maths helpers ───────────────────────────────────────────────────────
+  function dot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+  function cross(a,b){
+    return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  }
+  function vecEq(a,b){ return a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2]; }
+  function dirFromVec(v){ return Object.values(DIRS).find(d=>vecEq(d.vec,v)); }
+  function randFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function formatTime(ms){
+    const t = Math.floor(ms/100);
+    const m = Math.floor(t/600);
+    const s = Math.floor((t%600)/10);
+    const d = t%10;
+    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${d}`;
+  }
+
+  // ─── DRAWING ─────────────────────────────────────────────────────────────
+  const CX = ()=> canvas.width  * 0.5;
+  const CY = ()=> canvas.height * 0.56;
+  const LEN = 130;
+
+  function drawIdle(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    fillBg();
+    drawGrid();
+    drawAxes();
+    drawOriginDot();
+    drawTitle("Press ▶ Start to begin");
+    drawInfoPanel(["Motor effect (F = IL × B)","2D diagram","• = out of page, ⊗ = into page"]);
+  }
+
+  function drawScene(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    fillBg();
+    drawGrid();
+    drawAxes();
+    drawOriginDot();
+
+    // Draw the two known quantities
+    currentQuestion.shown.forEach(key=>{
+      const dir = currentQuestion[key];
+      drawQuantity(dir, COLORS[key], key);
     });
 
-    function getCSS(name){
-      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    // Label the unknown
+    const u = currentQuestion.unknown;
+    drawTitle(`Find the direction of ${LABELS[u]}`);
+    drawInfoPanel([
+      `Shown: ${currentQuestion.shown.map(k=>LABELS[k]).join(" & ")}`,
+      `Missing: ${LABELS[u]}`,
+      "• = out of page  ⊗ = into page"
+    ]);
+  }
+
+  function drawQuantity(dir, color, labelKey){
+    const cx = CX(), cy = CY();
+
+    if(dir.key==="PZ" || dir.key==="NZ"){
+      // Draw dot/cross symbol at the ORIGIN (centre of diagram)
+      drawPageSymbol(cx, cy, dir.key==="PZ", color, labelKey);
+    } else {
+      const dx =  dir.vec[0] * LEN;
+      const dy = -dir.vec[1] * LEN;
+      drawArrow(cx, cy, cx+dx, cy+dy, color, labelKey);
     }
+  }
 
-    function buildChoices(){
-      const order = ["PX","NX","PY","NY","PZ","NZ"];
-      choicesBox.innerHTML = "";
-      order.forEach(key => {
-        const d = DIRS[key];
-        const btn = document.createElement("button");
-        btn.className = "choice";
-        btn.innerHTML = `
-          <div class="symbol">${d.symbol}</div>
-          <div class="name">${d.name}<br><span style="color:#94a3b8">${d.short}</span></div>
-        `;
-        btn.addEventListener("click", () => submitAnswer(key));
-        choicesBox.appendChild(btn);
-      });
+  function fillBg(){
+    const g = ctx.createLinearGradient(0,0,0,canvas.height);
+    g.addColorStop(0,"#0f172a"); g.addColorStop(1,"#020617");
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  function drawGrid(){
+    ctx.save();
+    ctx.strokeStyle="rgba(148,163,184,.1)";
+    ctx.lineWidth=1;
+    const cx=CX(), cy=CY();
+    for(let i=-6;i<=6;i++){
+      ctx.beginPath(); ctx.moveTo(0,cy+i*40); ctx.lineTo(canvas.width,cy+i*40); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+i*60,0); ctx.lineTo(cx+i*60,canvas.height); ctx.stroke();
     }
+    ctx.restore();
+  }
 
-    function startGame(){
-      totalRounds = Math.max(1, Math.min(50, parseInt(roundInput.value, 10) || 10));
-      round = 1;
-      correct = 0;
-      attempts = 0;
-      started = true;
-      finished = false;
-      locked = false;
-      elapsedMs = 0;
-      startTime = performance.now();
-      finishBox.style.display = "none";
-      finishBox.textContent = "";
-      status("Game started. Answer the missing direction.", "");
-      startBtn.textContent = "Restart";
-      roundInput.disabled = true;
-      updateStats();
-      startTimer();
-      generateQuestion();
-    }
+  function drawAxes(){
+    const cx=CX(), cy=CY(), ext=LEN+50;
+    ctx.save();
+    ctx.strokeStyle="rgba(148,163,184,.4)";
+    ctx.lineWidth=2;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx-ext,cy); ctx.lineTo(cx+ext,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-ext); ctx.lineTo(cx,cy+ext); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="#64748b"; ctx.font="16px Arial";
+    ctx.fillText("+x", cx+ext-18, cy-10);
+    ctx.fillText("-x", cx-ext+4,  cy-10);
+    ctx.fillText("+y", cx+10,     cy-ext+20);
+    ctx.fillText("-y", cx+10,     cy+ext-8);
+    ctx.restore();
+  }
 
-    function startTimer(){
-      stopTimer();
-      timerId = setInterval(() => {
-        if (!started || finished) return;
-        elapsedMs = performance.now() - startTime;
-        timeDisplay.textContent = formatTime(elapsedMs);
-      }, 100);
-    }
+  function drawOriginDot(){
+    const cx=CX(), cy=CY();
+    ctx.beginPath();
+    ctx.arc(cx,cy,5,0,Math.PI*2);
+    ctx.fillStyle="#e2e8f0"; ctx.fill();
+  }
 
-    function stopTimer(){
-      if (timerId){
-        clearInterval(timerId);
-        timerId = null;
-      }
-    }
+  function drawTitle(text){
+    ctx.fillStyle="#f8fafc";
+    ctx.font="bold 26px Arial";
+    ctx.fillText(text, 24, 42);
+  }
 
-    function finishGame(){
-      finished = true;
-      started = false;
-      locked = true;
-      stopTimer();
-      roundInput.disabled = false;
-      questionText.innerHTML = `Game finished. You completed <strong>${totalRounds}</strong> rounds.`;
-      status("Well done. The timer has stopped.", "good");
-      finishBox.style.display = "block";
-      finishBox.innerHTML = `
-        <strong>Results</strong><br>
-        Final time: ${formatTime(elapsedMs)}<br>
-        Correct rounds completed: ${correct} / ${totalRounds}<br>
-        Total attempts: ${attempts}
-      `;
-      drawScene();
-    }
+  function drawInfoPanel(lines){
+    const x=canvas.width-248, y=18, w=224, h=32+lines.length*24;
+    roundRectFill(x,y,w,h,14,"rgba(11,18,32,.9)","#243244");
+    ctx.fillStyle="#94a3b8"; ctx.font="15px Arial";
+    lines.forEach((l,i)=> ctx.fillText(l, x+14, y+30+i*22));
+  }
 
-    function updateStats(){
-      roundDisplay.textContent = finished ? `${totalRounds} / ${totalRounds}` : `${Math.min(round, totalRounds)} / ${totalRounds}`;
-      correctDisplay.textContent = String(correct);
-      attemptDisplay.textContent = String(attempts);
-      timeDisplay.textContent = formatTime(elapsedMs);
-    }
+  function drawArrow(x1,y1,x2,y2,color,label){
+    ctx.save();
+    ctx.strokeStyle=color; ctx.lineWidth=7; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    const angle=Math.atan2(y2-y1,x2-x1), head=18;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-head*Math.cos(angle-Math.PI/7), y2-head*Math.sin(angle-Math.PI/7));
+    ctx.lineTo(x2-head*Math.cos(angle+Math.PI/7), y2-head*Math.sin(angle+Math.PI/7));
+    ctx.closePath();
+    ctx.fillStyle=color; ctx.fill();
+    ctx.fillStyle=color; ctx.font="bold 22px Arial";
+    ctx.fillText(label, x2+14, y2-14);
+    ctx.restore();
+  }
 
-    function status(text, type){
-      statusBox.textContent = text;
-      statusBox.className = "status";
-      if (type) statusBox.classList.add(type);
-    }
+  // Draw ⊙ or ⊗ at the origin (cx,cy) for out-of / into page directions
+  function drawPageSymbol(cx, cy, outOfPage, color, label){
+    ctx.save();
+    const r = 32;
 
-    function formatTime(ms){
-      const totalTenths = Math.floor(ms / 100);
-      const minutes = Math.floor(totalTenths / 600);
-      const seconds = Math.floor((totalTenths % 600) / 10);
-      const tenths = totalTenths % 10;
-      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
-    }
+    // Glowing ring
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 18;
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
 
-    function randomChoice(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function dot(a,b){
-      return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-    }
-
-    function cross(a,b){
-      return [
-        a[1]*b[2] - a[2]*b[1],
-        a[2]*b[0] - a[0]*b[2],
-        a[0]*b[1] - a[1]*b[0]
-      ];
-    }
-
-    function vecEq(a,b){
-      return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
-    }
-
-    function dirFromVec(vec){
-      return Object.values(DIRS).find(d => vecEq(d.vec, vec));
-    }
-
-    function generateQuestion(){
-      if (!started || finished) return;
-
-      const dirList = Object.values(DIRS);
-      const I = randomChoice(dirList);
-      const Boptions = dirList.filter(d => dot(d.vec, I.vec) === 0);
-      const B = randomChoice(Boptions);
-      const Fvec = cross(I.vec, B.vec);
-      const F = dirFromVec(Fvec);
-      const unknown = randomChoice(["F", "B", "I"]);
-
-      currentQuestion = {
-        F, B, I, unknown,
-        shown: ["F","B","I"].filter(k => k !== unknown),
-        correctKey: {F:F.key, B:B.key, I:I.key}[unknown]
-      };
-
-      questionText.innerHTML = `
-        Round <strong>${round}</strong> of <strong>${totalRounds}</strong><br>
-        Two directions are shown. Choose the missing direction for <strong>${LABELS[unknown]}</strong>.
-      `;
-
-      drawScene();
-      updateStats();
-    }
-
-    function submitAnswer(key){
-      if (!started || finished || locked || !currentQuestion) return;
-
-      attempts++;
-      locked = true;
-
-      const isCorrect = key === currentQuestion.correctKey;
-
-      if (isCorrect){
-        correct++;
-        status(`Correct: ${LABELS[currentQuestion.unknown]} is ${DIRS[key].name}. Moving to the next round.`, "good");
-        round++;
-        updateStats();
-
-        setTimeout(() => {
-          locked = false;
-          if (round > totalRounds){
-            finishGame();
-          } else {
-            generateQuestion();
-          }
-        }, 650);
-      } else {
-        status(`Wrong: ${LABELS[currentQuestion.unknown]} is not ${DIRS[key].name}. New question, same round.`, "bad");
-        updateStats();
-
-        setTimeout(() => {
-          locked = false;
-          generateQuestion();
-        }, 750);
-      }
-    }
-
-    function drawIdle(){
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      fillBackground();
-      drawTitle("Press Start to begin");
-      drawHintLines();
-      drawCenterMarker();
-      drawInfoPanel([
-        "Game rule:",
-        "Show 2 of F, B, I.",
-        "Choose the missing one from 6 directions.",
-        "Correct = next round. Wrong = same round."
-      ]);
-    }
-
-    function drawScene(){
-      if (!currentQuestion){
-        drawIdle();
-        return;
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      fillBackground();
-      drawHintLines();
-      drawCenterMarker();
-
-      if (viewMode === "3d"){
-        draw3DScene();
-      } else {
-        draw2DScene();
-      }
-
-      const missing = LABELS[currentQuestion.unknown];
-      drawTitle(`Find the direction of ${missing}`);
-      drawInfoPanel([
-        `View mode: ${viewMode.toUpperCase()}`,
-        `Shown: ${currentQuestion.shown.map(k => LABELS[k]).join(" and ")}`,
-        `Missing: ${missing}`
-      ]);
-    }
-
-    function fillBackground(){
-      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      g.addColorStop(0, "rgba(15,23,42,1)");
-      g.addColorStop(1, "rgba(2,6,23,1)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function drawTitle(text){
-      ctx.fillStyle = "#f8fafc";
-      ctx.font = "bold 28px Arial";
-      ctx.fillText(text, 26, 42);
-    }
-
-    function drawInfoPanel(lines){
-      const x = canvas.width - 250;
-      const y = 24;
-      const w = 210;
-      const h = 28 + lines.length * 24;
-      roundRect(x, y, w, h, 14, "rgba(11,18,32,.92)", "#243244");
-      ctx.fillStyle = "#cbd5e1";
-      ctx.font = "15px Arial";
-      lines.forEach((line, i) => {
-        ctx.fillText(line, x + 14, y + 28 + i * 22);
-      });
-    }
-
-    function drawHintLines(){
-      const cx = canvas.width * 0.5;
-      const cy = canvas.height * 0.58;
-
-      ctx.save();
-      ctx.strokeStyle = "rgba(148,163,184,.12)";
-      ctx.lineWidth = 1;
-
-      for (let i = -4; i <= 4; i++){
-        ctx.beginPath();
-        ctx.moveTo(0, cy + i * 40);
-        ctx.lineTo(canvas.width, cy + i * 40);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(cx + i * 60, 0);
-        ctx.lineTo(cx + i * 60, canvas.height);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawCenterMarker(){
-      const cx = canvas.width * 0.5;
-      const cy = canvas.height * 0.58;
+    if(outOfPage){
+      // Filled dot — coming toward viewer
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fillStyle = "#e2e8f0";
+      ctx.arc(cx, cy, 9, 0, Math.PI*2);
       ctx.fill();
-    }
-
-    function draw2DScene(){
-      const cx = canvas.width * 0.5;
-      const cy = canvas.height * 0.58;
-      const len = 115;
-
-      drawAxes2D(cx, cy, len + 35);
-
-      currentQuestion.shown.forEach((key) => {
-        const dir = currentQuestion[key];
-        const color = COLORS[key];
-
-        if (dir.key === "PZ" || dir.key === "NZ"){
-          const offsets = {
-            F: [-120, -80],
-            B: [120, -80],
-            I: [0, 110]
-          };
-          const [ox, oy] = offsets[key];
-          drawPageSymbol(cx + ox, cy + oy, dir.key === "PZ", color, key);
-        } else {
-          const dx = dir.vec[0] * len;
-          const dy = -dir.vec[1] * len;
-          drawArrow2D(cx, cy, cx + dx, cy + dy, color, key);
-        }
-      });
-
-      drawUnknownBox2D(cx, cy);
-      draw2DLegend(cx, cy);
-    }
-
-    function drawAxes2D(cx, cy, len){
-      ctx.save();
-      ctx.strokeStyle = "rgba(148,163,184,.35)";
-      ctx.lineWidth = 2;
-
-      ctx.beginPath();
-      ctx.moveTo(cx - len, cy);
-      ctx.lineTo(cx + len, cy);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - len);
-      ctx.lineTo(cx, cy + len);
-      ctx.stroke();
-
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "14px Arial";
-      ctx.fillText("+x", cx + len - 16, cy - 8);
-      ctx.fillText("-x", cx - len + 4, cy - 8);
-      ctx.fillText("+y", cx + 8, cy - len + 16);
-      ctx.fillText("-y", cx + 8, cy + len - 6);
-      ctx.restore();
-    }
-
-    function drawUnknownBox2D(cx, cy){
-      const u = currentQuestion.unknown;
-      roundRect(28, canvas.height - 110, 245, 70, 14, "rgba(11,18,32,.9)", "#334155");
-      ctx.fillStyle = "#f8fafc";
-      ctx.font = "bold 18px Arial";
-      ctx.fillText(`Missing: ${LABELS[u]}`, 42, canvas.height - 72);
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "15px Arial";
-      ctx.fillText("Choose one of the 6 directions below.", 42, canvas.height - 46);
-    }
-
-    function draw2DLegend(cx, cy){
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "15px Arial";
-      ctx.fillText("2D symbols: • = out of page, × = into page", 26, 74);
-    }
-
-    function draw3DScene(){
-      const axes = [
-        { vec:[1,0,0], label:"+x", color:"rgba(148,163,184,.35)" },
-        { vec:[0,1,0], label:"+y", color:"rgba(148,163,184,.35)" },
-        { vec:[0,0,1], label:"+z", color:"rgba(148,163,184,.35)" },
-        { vec:[-1,0,0], label:"-x", color:"rgba(148,163,184,.18)" },
-        { vec:[0,-1,0], label:"-y", color:"rgba(148,163,184,.18)" },
-        { vec:[0,0,-1], label:"-z", color:"rgba(148,163,184,.18)" }
-      ];
-
-      axes.forEach(a => drawArrow3D(a.vec, a.color, a.label, 125, 2));
-
-      currentQuestion.shown.forEach((key) => {
-        drawArrow3D(currentQuestion[key].vec, COLORS[key], key, 140, 6);
-      });
-
-      const u = currentQuestion.unknown;
-      const p = project([0.2, -0.15, 0.2], 145);
-      ctx.fillStyle = "rgba(255,255,255,.92)";
-      ctx.font = "bold 56px Arial";
-      ctx.fillText("?", p.x, p.y);
-      ctx.font = "18px Arial";
-      ctx.fillText(`Missing: ${LABELS[u]}`, 28, 78);
-    }
-
-    function project(v, scale = 130){
-      const cx = canvas.width * 0.5;
-      const cy = canvas.height * 0.58;
-
-      const ry = 35 * Math.PI / 180;
-      const rx = -28 * Math.PI / 180;
-
-      let [x, y, z] = v;
-
-      const x1 = x * Math.cos(ry) + z * Math.sin(ry);
-      const z1 = -x * Math.sin(ry) + z * Math.cos(ry);
-
-      const y2 = y * Math.cos(rx) - z1 * Math.sin(rx);
-      const z2 = y * Math.sin(rx) + z1 * Math.cos(rx);
-
-      return {
-        x: cx + x1 * scale,
-        y: cy - y2 * scale,
-        depth: z2
-      };
-    }
-
-    function drawArrow3D(vec, color, label, scale = 140, width = 5){
-      const start = project([0,0,0], scale);
-      const end = project(vec, scale);
-
-      ctx.save();
+    } else {
+      // X — going away from viewer
       ctx.strokeStyle = color;
-      ctx.lineWidth = width;
-      ctx.lineCap = "round";
-
-      ctx.beginPath();
-      ctx.moveTo(start.x, start.y);
-      ctx.lineTo(end.x, end.y);
-      ctx.stroke();
-
-      const angle = Math.atan2(end.y - start.y, end.x - start.x);
-      const head = 14;
-      ctx.beginPath();
-      ctx.moveTo(end.x, end.y);
-      ctx.lineTo(end.x - head * Math.cos(angle - Math.PI / 7), end.y - head * Math.sin(angle - Math.PI / 7));
-      ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 7), end.y - head * Math.sin(angle + Math.PI / 7));
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      ctx.fillStyle = color;
-      ctx.font = "bold 18px Arial";
-      ctx.fillText(label, end.x + 10, end.y - 10);
-      ctx.restore();
-    }
-
-    function drawArrow2D(x1, y1, x2, y2, color, label){
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 6;
-      ctx.lineCap = "round";
-
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-
-      const angle = Math.atan2(y2 - y1, x2 - x1);
-      const head = 16;
-      ctx.beginPath();
-      ctx.moveTo(x2, y2);
-      ctx.lineTo(x2 - head * Math.cos(angle - Math.PI / 7), y2 - head * Math.sin(angle - Math.PI / 7));
-      ctx.lineTo(x2 - head * Math.cos(angle + Math.PI / 7), y2 - head * Math.sin(angle + Math.PI / 7));
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      ctx.fillStyle = color;
-      ctx.font = "bold 20px Arial";
-      ctx.fillText(label, x2 + 12, y2 - 12);
-      ctx.restore();
-    }
-
-    function drawPageSymbol(x, y, outOfPage, color, label){
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
       ctx.lineWidth = 5;
-
+      ctx.lineCap = "round";
+      const o = 14;
       ctx.beginPath();
-      ctx.arc(x, y, 22, 0, Math.PI * 2);
-      ctx.stroke();
-
-      if (outOfPage){
-        ctx.beginPath();
-        ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.moveTo(x - 8, y - 8);
-        ctx.lineTo(x + 8, y + 8);
-        ctx.moveTo(x + 8, y - 8);
-        ctx.lineTo(x - 8, y + 8);
-        ctx.stroke();
-      }
-
-      ctx.font = "bold 20px Arial";
-      ctx.fillText(label, x + 30, y + 6);
-      ctx.restore();
+      ctx.moveTo(cx-o, cy-o); ctx.lineTo(cx+o, cy+o); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx+o, cy-o); ctx.lineTo(cx-o, cy+o); ctx.stroke();
     }
 
-    function roundRect(x, y, w, h, r, fill, stroke){
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-      if (fill){
-        ctx.fillStyle = fill;
-        ctx.fill();
-      }
-      if (stroke){
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-  </script>
+    // Label positioned offset from origin so it doesn't overlap multiple symbols
+    const labelOffsets = { F:[55,-55], B:[-85,-55], I:[55,60] };
+    const [ox,oy] = labelOffsets[label] || [50,-50];
+    ctx.fillStyle = color;
+    ctx.font = "bold 22px Arial";
+    ctx.fillText(label, cx+ox, cy+oy);
+
+    // Thin line connecting label to origin
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.45;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath();
+    ctx.moveTo(cx+ox-4, cy+oy-14);
+    ctx.lineTo(cx+(ox>0?r:-r), cy+(oy>0?r:-r));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function roundRectFill(x,y,w,h,r,fill,stroke){
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+    if(fill){ctx.fillStyle=fill; ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke; ctx.lineWidth=1.2; ctx.stroke();}
+    ctx.restore();
+  }
+</script>
 </body>
 </html>
