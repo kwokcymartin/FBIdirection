@@ -1,416 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Magnetic Force Direction Game</title>
   <style>
     :root{
-      --bg:#0f172a;
-      --panel:#111827;
-      --panel2:#1f2937;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --accent:#38bdf8;
-      --good:#22c55e;
-      --bad:#ef4444;
-      --force:#f59e0b;
-      --field:#06b6d4;
-      --current:#a78bfa;
-      --line:#334155;
+      --bg:#0f172a; --panel:#111827; --panel2:#1f2937;
+      --text:#e5e7eb; --muted:#94a3b8;
+      --force:#f59e0b; --field:#06b6d4; --current:#a78bfa;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box; margin:0; padding:0;}
     body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
+      font-family:Arial,Helvetica,sans-serif;
       background:linear-gradient(180deg,#020617,#0f172a);
       color:var(--text);
+      min-height:100vh;
     }
-    .wrap{
-      max-width:1200px;
-      margin:0 auto;
-      padding:18px;
-    }
-    h1{
-      margin:0 0 10px;
-      font-size:28px;
-      color:#f8fafc;
-    }
-    .subtitle{
-      margin:0 0 16px;
-      color:var(--muted);
-      line-height:1.45;
-    }
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;}
+    h1{font-size:26px;color:#f8fafc;margin-bottom:6px;}
+    .subtitle{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:14px;}
+
     .grid{
       display:grid;
-      grid-template-columns: 330px 1fr;
-      gap:16px;
+      grid-template-columns:320px 1fr;
+      gap:14px;
     }
     .panel{
-      background:rgba(17,24,39,.92);
+      background:rgba(17,24,39,.95);
       border:1px solid #1e293b;
       border-radius:16px;
-      padding:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
+      padding:14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.3);
     }
-    button, input{ font:inherit; }
+
+    /* buttons */
     .btn{
-      border:none;
-      border-radius:12px;
-      padding:10px 14px;
-      cursor:pointer;
-      background:#2563eb;
-      color:white;
-      transition:.18s ease;
+      border:none; border-radius:10px; padding:10px 18px;
+      cursor:pointer; font:inherit; font-size:15px;
+      color:white; background:#2563eb;
+      transition:.15s ease;
     }
-    .btn:hover{transform:translateY(-1px); filter:brightness(1.06)}
-    .btn.secondary{background:#374151}
-    .control-row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-    .round-box{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin:12px 0;
-    }
+    .btn:hover{filter:brightness(1.1);}
+    .btn.sec{background:#374151;}
+    .ctrl-row{display:flex;gap:8px;margin-bottom:12px;}
+
+    /* stats */
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
     .stat{
-      background:var(--panel2);
-      border:1px solid #273449;
-      border-radius:12px;
-      padding:12px;
+      background:var(--panel2); border:1px solid #273449;
+      border-radius:10px; padding:10px 12px;
     }
-    .stat .label{
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
-      text-transform:uppercase;
-      letter-spacing:.06em;
+    .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+    .stat .val{font-size:22px;font-weight:700;}
+
+    /* question box */
+    .qbox{
+      background:#0b1220; border:1px solid #1e293b;
+      border-radius:10px; padding:12px;
+      line-height:1.55; margin-bottom:12px;
+      min-height:60px; font-size:15px;
     }
-    .stat .value{
-      font-size:24px;
-      font-weight:700;
-    }
-    .legend{
-      display:grid;
-      gap:8px;
-      margin-top:10px;
-    }
-    .legend-item{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:8px 10px;
-      background:#0b1220;
-      border:1px solid #1e293b;
-      border-radius:10px;
-      color:#dbeafe;
-      font-size:14px;
-    }
-    .swatch{
-      width:14px; height:14px;
-      border-radius:50%;
-      flex:0 0 14px;
-    }
-    .swatch.force{background:var(--force)}
-    .swatch.field{background:var(--field)}
-    .swatch.current{background:var(--current)}
-    .canvas-wrap{
-      position:relative;
-      width:100%;
-    }
-    canvas{
-      width:100%;
-      height:auto;
-      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.98));
-      border:1px solid #1e293b;
-      border-radius:16px;
-      display:block;
-    }
-    /* Overlay tick/cross on top of canvas */
-    .feedback-overlay{
-      position:absolute;
-      top:0; left:0; right:0; bottom:0;
-      display:none;
-      justify-content:center;
-      align-items:center;
-      border-radius:16px;
-      pointer-events:none;
-    }
-    .feedback-overlay.show{ display:flex; }
-    .feedback-overlay .mark{
-      font-size:200px;
-      line-height:1;
-      font-weight:900;
-      filter: drop-shadow(0 0 30px currentColor);
-      animation: popIn .18s cubic-bezier(.3,1.4,.6,1) both;
-    }
-    .feedback-overlay.correct{ background:rgba(0,0,0,.18); }
-    .feedback-overlay.correct .mark{ color:#22c55e; }
-    .feedback-overlay.wrong{ background:rgba(0,0,0,.18); }
-    .feedback-overlay.wrong .mark{ color:#ef4444; }
-    @keyframes popIn{
-      from{transform:scale(0.4);opacity:0}
-      to{transform:scale(1);opacity:1}
-    }
-    .question{
-      margin:12px 0 14px;
-      padding:12px 14px;
-      border-radius:12px;
-      background:#0b1220;
-      border:1px solid #1e293b;
-      line-height:1.5;
-    }
+
+    /* answer choices */
     .choices{
-      display:grid;
-      grid-template-columns:repeat(3, 1fr);
-      gap:10px;
-      margin-top:12px;
+      display:grid; grid-template-columns:repeat(3,1fr);
+      gap:8px; margin-bottom:12px;
     }
     .choice{
-      background:#1f2937;
-      border:1px solid #334155;
-      color:#f8fafc;
-      border-radius:14px;
-      padding:14px 10px;
-      cursor:pointer;
-      min-height:78px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-      gap:6px;
-      transition:.16s ease;
+      background:#1f2937; border:1px solid #334155;
+      border-radius:12px; padding:12px 8px;
+      cursor:pointer; color:#f8fafc;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:4px; min-height:72px;
+      transition:.14s ease;
+      font:inherit;
     }
-    .choice:hover{
+    .choice:not(:disabled):hover{
+      background:#273449; border-color:#475569;
       transform:translateY(-2px);
-      background:#273449;
-      border-color:#475569;
     }
-    .choice:disabled{
-      opacity:.4;
-      cursor:not-allowed;
-      transform:none;
-    }
-    .choice .symbol{ font-size:24px; font-weight:700; }
-    .choice .name{ font-size:13px; color:#cbd5e1; text-align:center; }
+    .choice:disabled{opacity:.35; cursor:not-allowed;}
+    .choice .sym{font-size:26px;font-weight:900;}
+    .choice .lbl{font-size:12px;color:#94a3b8;text-align:center;}
+
+    /* status */
     .status{
-      min-height:46px;
-      display:flex;
-      align-items:center;
-      margin-top:12px;
-      padding:10px 12px;
-      border-radius:12px;
-      background:#0b1220;
-      border:1px solid #1e293b;
-      color:#e2e8f0;
+      border-radius:10px; padding:10px 12px;
+      background:#0b1220; border:1px solid #1e293b;
+      font-size:14px; line-height:1.4; min-height:42px;
+      margin-bottom:12px;
     }
-    .status.good{ border-color:rgba(34,197,94,.5); color:#bbf7d0; }
-    .status.bad{ border-color:rgba(239,68,68,.5); color:#fecaca; }
-    .footer-note{
-      color:var(--muted);
-      margin-top:10px;
-      font-size:13px;
-      line-height:1.45;
+    .status.good{border-color:rgba(34,197,94,.6);color:#bbf7d0;}
+    .status.bad{border-color:rgba(239,68,68,.6);color:#fecaca;}
+
+    /* legend */
+    .legend{display:grid;gap:6px;margin-bottom:10px;}
+    .leg-item{
+      display:flex; align-items:center; gap:8px;
+      padding:7px 10px; background:#0b1220;
+      border:1px solid #1e293b; border-radius:8px;
+      font-size:13px; color:#dbeafe;
     }
+    .dot{width:12px;height:12px;border-radius:50%;flex:0 0 12px;}
+
+    .note{color:var(--muted);font-size:12px;line-height:1.5;}
     .pill{
-      display:inline-block;
-      border-radius:999px;
-      padding:4px 10px;
-      background:#082f49;
-      border:1px solid #0c4a6e;
-      color:#bae6fd;
-      font-size:12px;
-      margin-right:8px;
-      margin-bottom:6px;
+      display:inline-block; border-radius:999px;
+      padding:3px 9px; background:#082f49;
+      border:1px solid #0c4a6e; color:#bae6fd;
+      font-size:11px; margin:2px 4px 2px 0;
     }
 
-    /* ===== SUMMARY SCREEN ===== */
-    #summaryScreen{
-      display:none;
-      position:fixed;
-      inset:0;
-      background:rgba(2,6,23,.95);
-      z-index:100;
-      justify-content:center;
-      align-items:center;
-      backdrop-filter:blur(6px);
-    }
-    #summaryScreen.show{ display:flex; }
-    .summary-card{
-      background:#111827;
-      border:1px solid #1e293b;
-      border-radius:24px;
-      padding:40px 48px;
-      max-width:480px;
-      width:90%;
-      text-align:center;
-      box-shadow:0 30px 80px rgba(0,0,0,.6);
-      animation: popIn .25s cubic-bezier(.3,1.4,.6,1) both;
-    }
-    .summary-card h2{
-      margin:0 0 8px;
-      font-size:32px;
-      color:#f8fafc;
-    }
-    .summary-card .trophy{
-      font-size:72px;
-      line-height:1.2;
-      margin-bottom:10px;
-    }
-    .summary-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-      margin:24px 0;
-    }
-    .summary-stat{
-      background:#1f2937;
-      border:1px solid #273449;
-      border-radius:14px;
-      padding:16px 10px;
-    }
-    .summary-stat .s-label{
-      font-size:12px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.06em;
-      margin-bottom:8px;
-    }
-    .summary-stat .s-value{
-      font-size:30px;
-      font-weight:700;
-      color:#f8fafc;
-    }
-    .summary-card .play-again{
-      margin-top:8px;
-      padding:14px 32px;
-      font-size:17px;
-      border-radius:14px;
-      background:#2563eb;
-      color:white;
-      border:none;
-      cursor:pointer;
-      transition:.18s ease;
-    }
-    .summary-card .play-again:hover{ filter:brightness(1.1); transform:translateY(-1px); }
-    .accuracy-bar-wrap{
-      background:#0b1220;
-      border-radius:999px;
-      height:10px;
-      margin:8px 0 20px;
-      overflow:hidden;
-      border:1px solid #1e293b;
-    }
-    .accuracy-bar{
-      height:100%;
-      border-radius:999px;
-      background:linear-gradient(90deg, #22c55e, #38bdf8);
-      transition:width .5s ease;
+    /* canvas wrapper */
+    .cw{position:relative;width:100%;}
+    canvas{
+      display:block; width:100%; height:auto;
+      border:1px solid #1e293b; border-radius:14px;
     }
 
-    @media (max-width: 900px){
-      .grid{grid-template-columns:1fr}
-      .choices{grid-template-columns:repeat(2, 1fr)}
+    /* feedback overlay */
+    .fb-overlay{
+      position:absolute; inset:0;
+      display:none; align-items:center; justify-content:center;
+      border-radius:14px; pointer-events:none;
+    }
+    .fb-overlay.show{display:flex;}
+    .fb-mark{
+      font-size:180px; font-weight:900; line-height:1;
+      animation:popIn .2s cubic-bezier(.3,1.5,.5,1) both;
+    }
+    .fb-overlay.ok{background:rgba(0,0,0,.15);}
+    .fb-overlay.ok .fb-mark{color:#22c55e; filter:drop-shadow(0 0 24px #22c55e);}
+    .fb-overlay.err{background:rgba(0,0,0,.15);}
+    .fb-overlay.err .fb-mark{color:#ef4444; filter:drop-shadow(0 0 24px #ef4444);}
+    @keyframes popIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+
+    /* summary screen */
+    #summary{
+      display:none; position:fixed; inset:0; z-index:200;
+      background:rgba(2,6,23,.92); backdrop-filter:blur(8px);
+      align-items:center; justify-content:center;
+    }
+    #summary.show{display:flex;}
+    .sum-card{
+      background:#111827; border:1px solid #1e293b;
+      border-radius:22px; padding:36px 44px;
+      max-width:460px; width:92%; text-align:center;
+      box-shadow:0 24px 64px rgba(0,0,0,.6);
+      animation:popIn .25s cubic-bezier(.3,1.4,.5,1) both;
+    }
+    .trophy{font-size:64px;margin-bottom:8px;}
+    .sum-card h2{font-size:28px;color:#f8fafc;margin-bottom:4px;}
+    .sum-card p{color:var(--muted);font-size:14px;margin-bottom:16px;}
+    .bar-wrap{background:#0b1220;border-radius:999px;height:9px;margin-bottom:20px;overflow:hidden;border:1px solid #1e293b;}
+    .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#22c55e,#38bdf8);transition:width .6s ease;}
+    .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+    .sum-stat{background:#1f2937;border:1px solid #273449;border-radius:12px;padding:14px 10px;}
+    .sum-stat .sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+    .sum-stat .sv{font-size:28px;font-weight:700;color:#f8fafc;}
+    .play-again{
+      padding:13px 30px; font-size:16px; border:none;
+      border-radius:12px; background:#2563eb; color:white;
+      cursor:pointer; font:inherit; transition:.15s ease;
+    }
+    .play-again:hover{filter:brightness(1.1);}
+
+    @media(max-width:860px){
+      .grid{grid-template-columns:1fr;}
+      .choices{grid-template-columns:repeat(2,1fr);}
     }
   </style>
 </head>
 <body>
 
-<!-- ===== SUMMARY OVERLAY ===== -->
-<div id="summaryScreen">
-  <div class="summary-card">
+<!-- SUMMARY OVERLAY -->
+<div id="summary">
+  <div class="sum-card">
     <div class="trophy">🏆</div>
     <h2>Game Complete!</h2>
-    <p style="color:var(--muted);margin:0 0 4px">You completed 5 correct rounds</p>
-    <div class="accuracy-bar-wrap">
-      <div class="accuracy-bar" id="accuracyBar" style="width:0%"></div>
+    <p>You finished 5 correct rounds!</p>
+    <div class="bar-wrap"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    <div class="sum-grid">
+      <div class="sum-stat"><div class="sl">Final Time</div><div class="sv" id="sTime">—</div></div>
+      <div class="sum-stat"><div class="sl">Total Attempts</div><div class="sv" id="sAttempts">—</div></div>
+      <div class="sum-stat"><div class="sl">Accuracy</div><div class="sv" id="sAccuracy">—</div></div>
+      <div class="sum-stat"><div class="sl">Wrong Answers</div><div class="sv" id="sWrong">—</div></div>
     </div>
-    <div class="summary-grid">
-      <div class="summary-stat">
-        <div class="s-label">Final Time</div>
-        <div class="s-value" id="sumTime">—</div>
-      </div>
-      <div class="summary-stat">
-        <div class="s-label">Total Attempts</div>
-        <div class="s-value" id="sumAttempts">—</div>
-      </div>
-      <div class="summary-stat">
-        <div class="s-label">Accuracy</div>
-        <div class="s-value" id="sumAccuracy">—</div>
-      </div>
-      <div class="summary-stat">
-        <div class="s-label">Wrong Answers</div>
-        <div class="s-value" id="sumWrong">—</div>
-      </div>
-    </div>
-    <button class="play-again" id="playAgainBtn">Play Again</button>
+    <button class="play-again" id="playAgainBtn">▶ Play Again</button>
   </div>
 </div>
 
 <div class="wrap">
-  <h1>Magnetic Force Direction Game</h1>
+  <h1>⚡ Magnetic Force Direction Game</h1>
   <p class="subtitle">
-    Practise the motor effect (Fleming's Left-Hand Rule). Two directions among <strong>F</strong>, <strong>B</strong>, and <strong>I</strong> are shown — find the third. Complete <strong>5 correct rounds</strong> as fast as you can!
+    Apply the motor effect (<strong>F = IL × B</strong>). Two of the three vectors are shown — pick the missing direction.
+    Complete <strong>5 correct rounds</strong> as fast as you can!
   </p>
 
   <div class="grid">
     <!-- LEFT PANEL -->
     <div class="panel">
-      <div class="control-row">
+      <div class="ctrl-row">
         <button class="btn" id="startBtn">▶ Start</button>
-        <button class="btn secondary" id="resetBtn">↺ Reset</button>
+        <button class="btn sec" id="resetBtn">↺ Reset</button>
       </div>
 
-      <div class="round-box">
-        <div class="stat">
-          <div class="label">Round</div>
-          <div class="value" id="roundDisplay">0 / 5</div>
-        </div>
-        <div class="stat">
-          <div class="label">Time</div>
-          <div class="value" id="timeDisplay">00:00.0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Correct</div>
-          <div class="value" id="correctDisplay">0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Attempts</div>
-          <div class="value" id="attemptDisplay">0</div>
-        </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="lbl">Round</div><div class="val" id="dRound">0 / 5</div></div>
+        <div class="stat"><div class="lbl">Time</div><div class="val" id="dTime">00:00.0</div></div>
+        <div class="stat"><div class="lbl">Correct</div><div class="val" id="dCorrect">0</div></div>
+        <div class="stat"><div class="lbl">Attempts</div><div class="val" id="dAttempts">0</div></div>
       </div>
 
-      <div class="question" id="questionText">
-        Press <strong>▶ Start</strong> to begin. Timer starts immediately.
+      <div class="qbox" id="qbox">
+        Press <strong>▶ Start</strong> to begin. The timer starts immediately.
       </div>
 
-      <div class="choices" id="choices"></div>
+      <div class="choices" id="choicesBox"></div>
 
       <div class="status" id="statusBox">Ready to play.</div>
 
       <div class="legend">
-        <div class="legend-item"><span class="swatch force"></span> F — magnetic force on the wire</div>
-        <div class="legend-item"><span class="swatch field"></span> B — magnetic field direction</div>
-        <div class="legend-item"><span class="swatch current"></span> I — conventional current direction</div>
+        <div class="leg-item"><span class="dot" style="background:#f59e0b"></span> F — force on the wire</div>
+        <div class="leg-item"><span class="dot" style="background:#06b6d4"></span> B — magnetic field</div>
+        <div class="leg-item"><span class="dot" style="background:#a78bfa"></span> I — conventional current</div>
       </div>
-
-      <div class="footer-note">
+      <div class="note">
         <span class="pill">5 correct = win</span>
         <span class="pill">Wrong = new question, same round</span>
-        <span class="pill">• = out of page &nbsp; × = into page</span>
+        <span class="pill">⊙ out of page &nbsp;⊗ into page</span>
       </div>
     </div>
 
-    <!-- RIGHT PANEL: Canvas -->
+    <!-- RIGHT PANEL -->
     <div class="panel" style="padding:0;overflow:hidden;">
-      <div class="canvas-wrap">
+      <div class="cw">
         <canvas id="scene" width="820" height="520"></canvas>
-        <div class="feedback-overlay" id="feedbackOverlay">
-          <span class="mark" id="feedbackMark"></span>
+        <div class="fb-overlay" id="fbOverlay">
+          <span class="fb-mark" id="fbMark"></span>
         </div>
       </div>
     </div>
@@ -418,423 +247,371 @@
 </div>
 
 <script>
-  // ─── Direction definitions ────────────────────────────────────────────────
-  const DIRS = {
-    PX: { key:"PX", name:"Right",       short:"+x", symbol:"→", vec:[1,0,0]  },
-    NX: { key:"NX", name:"Left",        short:"-x", symbol:"←", vec:[-1,0,0] },
-    PY: { key:"PY", name:"Up",          short:"+y", symbol:"↑", vec:[0,1,0]  },
-    NY: { key:"NY", name:"Down",        short:"-y", symbol:"↓", vec:[0,-1,0] },
-    PZ: { key:"PZ", name:"Out of page", short:"+z", symbol:"⊙", vec:[0,0,1]  },
-    NZ: { key:"NZ", name:"Into page",   short:"-z", symbol:"⊗", vec:[0,0,-1] },
-  };
+(function(){
+  "use strict";
 
-  const COLORS  = { F:"#f59e0b", B:"#06b6d4", I:"#a78bfa" };
-  const LABELS  = { F:"Force (F)", B:"Magnetic field (B)", I:"Current (I)" };
+  // ── Constants ─────────────────────────────────────────────────
+  const WIN = 5;
 
-  const WIN_ROUNDS = 5;
+  const DIRS = [
+    { key:"PX", name:"Right",       short:"+x", sym:"→",  vec:[1,0,0]  },
+    { key:"NX", name:"Left",        short:"-x", sym:"←",  vec:[-1,0,0] },
+    { key:"PY", name:"Up",          short:"+y", sym:"↑",  vec:[0,1,0]  },
+    { key:"NY", name:"Down",        short:"-y", sym:"↓",  vec:[0,-1,0] },
+    { key:"PZ", name:"Out of page", short:"+z", sym:"⊙",  vec:[0,0,1]  },
+    { key:"NZ", name:"Into page",   short:"-z", sym:"⊗",  vec:[0,0,-1] },
+  ];
 
-  // ─── DOM refs ────────────────────────────────────────────────────────────
-  const canvas          = document.getElementById("scene");
-  const ctx             = canvas.getContext("2d");
-  const startBtn        = document.getElementById("startBtn");
-  const resetBtn        = document.getElementById("resetBtn");
-  const questionText    = document.getElementById("questionText");
-  const roundDisplay    = document.getElementById("roundDisplay");
-  const timeDisplay     = document.getElementById("timeDisplay");
-  const correctDisplay  = document.getElementById("correctDisplay");
-  const attemptDisplay  = document.getElementById("attemptDisplay");
-  const statusBox       = document.getElementById("statusBox");
-  const choicesBox      = document.getElementById("choices");
-  const feedbackOverlay = document.getElementById("feedbackOverlay");
-  const feedbackMark    = document.getElementById("feedbackMark");
-  const summaryScreen   = document.getElementById("summaryScreen");
-  const sumTime         = document.getElementById("sumTime");
-  const sumAttempts     = document.getElementById("sumAttempts");
-  const sumAccuracy     = document.getElementById("sumAccuracy");
-  const sumWrong        = document.getElementById("sumWrong");
-  const accuracyBar     = document.getElementById("accuracyBar");
-  const playAgainBtn    = document.getElementById("playAgainBtn");
+  const COL = { F:"#f59e0b", B:"#06b6d4", I:"#a78bfa" };
+  const LBL = { F:"Force (F)", B:"Magnetic field (B)", I:"Current (I)" };
 
-  // ─── State ───────────────────────────────────────────────────────────────
+  // ── DOM ───────────────────────────────────────────────────────
+  const canvas     = document.getElementById("scene");
+  const ctx        = canvas.getContext("2d");
+  const startBtn   = document.getElementById("startBtn");
+  const resetBtn   = document.getElementById("resetBtn");
+  const qbox       = document.getElementById("qbox");
+  const choicesBox = document.getElementById("choicesBox");
+  const statusBox  = document.getElementById("statusBox");
+  const dRound     = document.getElementById("dRound");
+  const dTime      = document.getElementById("dTime");
+  const dCorrect   = document.getElementById("dCorrect");
+  const dAttempts  = document.getElementById("dAttempts");
+  const fbOverlay  = document.getElementById("fbOverlay");
+  const fbMark     = document.getElementById("fbMark");
+  const summary    = document.getElementById("summary");
+  const barFill    = document.getElementById("barFill");
+  const sTime      = document.getElementById("sTime");
+  const sAttempts  = document.getElementById("sAttempts");
+  const sAccuracy  = document.getElementById("sAccuracy");
+  const sWrong     = document.getElementById("sWrong");
+  const playAgainBtn = document.getElementById("playAgainBtn");
+
+  // ── State ─────────────────────────────────────────────────────
   let round=0, correct=0, attempts=0, wrongCount=0;
-  let started=false, finished=false, locked=false;
-  let startTime=0, elapsedMs=0, timerId=null;
-  let currentQuestion=null;
+  let active=false, locked=false;
+  let t0=0, elapsed=0, ticker=null;
+  let Q=null; // current question
 
-  // ─── Init ────────────────────────────────────────────────────────────────
-  buildChoiceButtons();
+  // ── Bootstrap ─────────────────────────────────────────────────
+  buildButtons();
   drawIdle();
 
   startBtn.addEventListener("click", startGame);
   resetBtn.addEventListener("click", resetGame);
-  playAgainBtn.addEventListener("click", () => {
-    summaryScreen.classList.remove("show");
-    resetGame();
-  });
+  playAgainBtn.addEventListener("click", ()=>{ summary.classList.remove("show"); resetGame(); });
 
-  // ─── Game flow ───────────────────────────────────────────────────────────
+  // ── Game flow ─────────────────────────────────────────────────
   function startGame(){
     round=1; correct=0; attempts=0; wrongCount=0;
-    started=true; finished=false; locked=false;
-    elapsedMs=0;
-    startTime = performance.now();
-    summaryScreen.classList.remove("show");
-    setStatus("Game started! Find the missing direction.", "");
-    updateStats();
-    startTimer();
-    generateQuestion();
+    active=true; locked=false; elapsed=0;
+    t0 = performance.now();
+    summary.classList.remove("show");
+    hideFeedback();
+    setStatus("Game started! Choose the missing direction.", "");
+    tick(); // start timer
+    newQuestion();
   }
 
   function resetGame(){
-    stopTimer();
-    round=0; correct=0; attempts=0; wrongCount=0;
-    started=false; finished=false; locked=false; elapsedMs=0;
-    currentQuestion=null;
-    timeDisplay.textContent="00:00.0";
-    roundDisplay.textContent=`0 / ${WIN_ROUNDS}`;
-    correctDisplay.textContent="0";
-    attemptDisplay.textContent="0";
-    questionText.innerHTML="Press <strong>▶ Start</strong> to begin. Timer starts immediately.";
-    setStatus("Ready to play.","");
-    hideOverlay();
-    drawIdle();
-    enableChoices(false);
-  }
-
-  function finishGame(){
-    finished=true; started=false; locked=true;
-    stopTimer();
-    const accuracy = attempts > 0 ? Math.round(WIN_ROUNDS / attempts * 100) : 100;
-    sumTime.textContent     = formatTime(elapsedMs);
-    sumAttempts.textContent = String(attempts);
-    sumAccuracy.textContent = accuracy + "%";
-    sumWrong.textContent    = String(wrongCount);
-    accuracyBar.style.width = accuracy + "%";
-    summaryScreen.classList.add("show");
-  }
-
-  function generateQuestion(){
-    if(!started || finished) return;
-
-    const dirList = Object.values(DIRS);
-
-    // pick I, then B perpendicular to I, compute F = I × B
-    const I = randFrom(dirList);
-    const Bopts = dirList.filter(d => dot(d.vec, I.vec) === 0);
-    const B = randFrom(Bopts);
-    const Fvec = cross(I.vec, B.vec);
-    const F = dirFromVec(Fvec);
-
-    const unknown = randFrom(["F","B","I"]);
-    currentQuestion = { F, B, I, unknown,
-      shown: ["F","B","I"].filter(k=>k!==unknown),
-      correctKey: {F:F.key, B:B.key, I:I.key}[unknown]
-    };
-
-    questionText.innerHTML =
-      `Round <strong>${round}</strong> of <strong>${WIN_ROUNDS}</strong><br>
-       Two directions are shown. Choose the missing direction for
-       <strong>${LABELS[unknown]}</strong>.`;
-
-    enableChoices(true);
+    clearTimeout(ticker); ticker=null;
+    active=false; locked=false; elapsed=0;
+    round=0; correct=0; attempts=0; wrongCount=0; Q=null;
+    dTime.textContent="00:00.0";
     updateStats();
-    hideOverlay();
+    qbox.innerHTML="Press <strong>▶ Start</strong> to begin. Timer starts immediately.";
+    setStatus("Ready to play.","");
+    hideFeedback();
+    setChoicesEnabled(false);
+    drawIdle();
+  }
+
+  function newQuestion(){
+    if(!active) return;
+    Q = makeQuestion();
+    qbox.innerHTML =
+      `Round <strong>${round}</strong> / <strong>${WIN}</strong> &nbsp;—&nbsp;
+       Choose the direction of <strong>${LBL[Q.unknown]}</strong>.`;
+    setChoicesEnabled(true);
+    locked = false;
+    hideFeedback();
+    updateStats();
     drawScene();
   }
 
   function submitAnswer(key){
-    if(!started || finished || locked || !currentQuestion) return;
+    if(!active || locked || !Q) return;
+    locked = true;
     attempts++;
-    locked=true;
-    enableChoices(false);
-    const isCorrect = (key === currentQuestion.correctKey);
+    setChoicesEnabled(false);
 
-    if(isCorrect){
+    if(key === Q.answerKey){
       correct++;
-      showOverlay(true);
-      setStatus(`✓ Correct! ${LABELS[currentQuestion.unknown]} is ${DIRS[key].name}.`, "good");
+      showFeedback(true);
+      setStatus(`✓ Correct! ${LBL[Q.unknown]} is <strong>${dirByKey(key).name}</strong>.`, "good");
       round++;
       updateStats();
       setTimeout(()=>{
-        hideOverlay();
-        if(correct >= WIN_ROUNDS){
-          finishGame();
-        } else {
-          locked=false;
-          generateQuestion();
-        }
-      }, 900);
+        hideFeedback();
+        if(correct >= WIN){ endGame(); }
+        else { newQuestion(); }
+      }, 950);
     } else {
       wrongCount++;
-      showOverlay(false);
-      setStatus(`✗ Wrong. That direction is not correct. Try a new question.`, "bad");
+      showFeedback(false);
+      setStatus(`✗ Incorrect. A new question for the same round will appear.`, "bad");
       updateStats();
       setTimeout(()=>{
-        hideOverlay();
-        locked=false;
-        generateQuestion(); // same round number, new orientation
-      }, 900);
+        hideFeedback();
+        newQuestion();
+      }, 950);
     }
   }
 
-  // ─── Timer ───────────────────────────────────────────────────────────────
-  function startTimer(){
-    stopTimer();
-    timerId = setInterval(()=>{
-      if(!started||finished) return;
-      elapsedMs = performance.now() - startTime;
-      timeDisplay.textContent = formatTime(elapsedMs);
-    }, 100);
+  function endGame(){
+    active = false;
+    locked = true;
+    clearTimeout(ticker); ticker = null;
+    const acc = Math.round(WIN / Math.max(attempts,WIN) * 100);
+    sTime.textContent     = fmtTime(elapsed);
+    sAttempts.textContent = String(attempts);
+    sAccuracy.textContent = acc + "%";
+    sWrong.textContent    = String(wrongCount);
+    setTimeout(()=>{ barFill.style.width = acc + "%"; }, 100);
+    summary.classList.add("show");
   }
-  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
 
-  // ─── UI helpers ──────────────────────────────────────────────────────────
+  // ── Timer ─────────────────────────────────────────────────────
+  function tick(){
+    if(!active) return;
+    elapsed = performance.now() - t0;
+    dTime.textContent = fmtTime(elapsed);
+    ticker = setTimeout(tick, 100);
+  }
+
+  // ── Question factory ──────────────────────────────────────────
+  function makeQuestion(){
+    // pick random I, then perpendicular B, compute F = I x B
+    const I = randFrom(DIRS);
+    const Bcandidates = DIRS.filter(d => dot(d.vec, I.vec) === 0);
+    const B = randFrom(Bcandidates);
+    const Fvec = cross(I.vec, B.vec);
+    const F = DIRS.find(d => vecEq(d.vec, Fvec));
+    const unknown = randFrom(["F","B","I"]);
+    return {
+      F, B, I, unknown,
+      shown: ["F","B","I"].filter(k => k !== unknown),
+      answerKey: {F:F.key, B:B.key, I:I.key}[unknown]
+    };
+  }
+
+  // ── UI helpers ────────────────────────────────────────────────
   function updateStats(){
-    roundDisplay.textContent  = `${Math.min(round, WIN_ROUNDS)} / ${WIN_ROUNDS}`;
-    correctDisplay.textContent= String(correct);
-    attemptDisplay.textContent= String(attempts);
+    dRound.textContent    = `${Math.min(round,WIN)} / ${WIN}`;
+    dCorrect.textContent  = String(correct);
+    dAttempts.textContent = String(attempts);
   }
 
-  function setStatus(text, type){
-    statusBox.textContent = text;
-    statusBox.className = "status";
-    if(type) statusBox.classList.add(type);
+  function setStatus(html, cls){
+    statusBox.innerHTML = html;
+    statusBox.className = "status" + (cls ? " "+cls : "");
   }
 
-  function showOverlay(isCorrect){
-    feedbackOverlay.className = "feedback-overlay show " + (isCorrect?"correct":"wrong");
-    feedbackMark.textContent  = isCorrect ? "✓" : "✗";
-  }
-  function hideOverlay(){
-    feedbackOverlay.className = "feedback-overlay";
+  function showFeedback(ok){
+    fbMark.textContent = ok ? "✓" : "✗";
+    fbOverlay.className = "fb-overlay show " + (ok ? "ok" : "err");
   }
 
-  function enableChoices(on){
-    choicesBox.querySelectorAll(".choice").forEach(b=>{ b.disabled=!on; });
+  function hideFeedback(){
+    fbOverlay.className = "fb-overlay";
   }
 
-  function buildChoiceButtons(){
-    const order = ["PX","NX","PY","NY","PZ","NZ"];
-    choicesBox.innerHTML="";
-    order.forEach(key=>{
-      const d = DIRS[key];
+  function setChoicesEnabled(on){
+    choicesBox.querySelectorAll("button.choice").forEach(b => {
+      b.disabled = !on;
+    });
+  }
+
+  function buildButtons(){
+    choicesBox.innerHTML = "";
+    DIRS.forEach(d => {
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.className = "choice";
-      btn.disabled  = true;
+      btn.disabled = true;
       btn.innerHTML =
-        `<div class="symbol">${d.symbol}</div>
-         <div class="name">${d.name}<br><span style="color:#94a3b8">${d.short}</span></div>`;
-      btn.addEventListener("click", ()=>submitAnswer(key));
+        `<span class="sym">${d.sym}</span>
+         <span class="lbl">${d.name}<br><small>${d.short}</small></span>`;
+      btn.addEventListener("click", () => submitAnswer(d.key));
       choicesBox.appendChild(btn);
     });
   }
 
-  // ─── Maths helpers ───────────────────────────────────────────────────────
+  // ── Math ──────────────────────────────────────────────────────
   function dot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
   function cross(a,b){
     return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
   }
-  function vecEq(a,b){ return a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2]; }
-  function dirFromVec(v){ return Object.values(DIRS).find(d=>vecEq(d.vec,v)); }
+  function vecEq(a,b){ return a[0]===b[0] && a[1]===b[1] && a[2]===b[2]; }
   function randFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function formatTime(ms){
-    const t = Math.floor(ms/100);
-    const m = Math.floor(t/600);
-    const s = Math.floor((t%600)/10);
-    const d = t%10;
-    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${d}`;
+  function dirByKey(k){ return DIRS.find(d=>d.key===k); }
+  function fmtTime(ms){
+    const t=Math.floor(ms/100);
+    const m=Math.floor(t/600), s=Math.floor((t%600)/10), f=t%10;
+    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${f}`;
   }
 
-  // ─── DRAWING ─────────────────────────────────────────────────────────────
-  const CX = ()=> canvas.width  * 0.5;
-  const CY = ()=> canvas.height * 0.56;
-  const LEN = 130;
+  // ── Drawing ───────────────────────────────────────────────────
+  const W = canvas.width, H = canvas.height;
+  const CX = W*0.5, CY = H*0.56;
+  const ALEN = 130; // arrow length in canvas px
 
   function drawIdle(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    fillBg();
-    drawGrid();
-    drawAxes();
-    drawOriginDot();
-    drawTitle("Press ▶ Start to begin");
-    drawInfoPanel(["Motor effect (F = IL × B)","2D diagram","• = out of page, ⊗ = into page"]);
+    clear();
+    grid();
+    axes();
+    originDot();
+    title("Press ▶ Start to begin");
+    infoBox(["F = IL × B  (motor effect)","• / ⊙ = out of page","⊗ = into page"]);
   }
 
   function drawScene(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    fillBg();
-    drawGrid();
-    drawAxes();
-    drawOriginDot();
-
-    // Draw the two known quantities
-    currentQuestion.shown.forEach(key=>{
-      const dir = currentQuestion[key];
-      drawQuantity(dir, COLORS[key], key);
-    });
-
-    // Label the unknown
-    const u = currentQuestion.unknown;
-    drawTitle(`Find the direction of ${LABELS[u]}`);
-    drawInfoPanel([
-      `Shown: ${currentQuestion.shown.map(k=>LABELS[k]).join(" & ")}`,
-      `Missing: ${LABELS[u]}`,
-      "• = out of page  ⊗ = into page"
+    if(!Q){ drawIdle(); return; }
+    clear();
+    grid();
+    axes();
+    originDot();
+    Q.shown.forEach(k => drawQuantity(Q[k], COL[k], k));
+    title(`Find the direction of: ${LBL[Q.unknown]}`);
+    infoBox([
+      `Known: ${Q.shown.map(k=>LBL[k]).join(" & ")}`,
+      `Missing: ${LBL[Q.unknown]}`,
+      "⊙ = out of page   ⊗ = into page"
     ]);
   }
 
   function drawQuantity(dir, color, labelKey){
-    const cx = CX(), cy = CY();
-
-    if(dir.key==="PZ" || dir.key==="NZ"){
-      // Draw dot/cross symbol at the ORIGIN (centre of diagram)
-      drawPageSymbol(cx, cy, dir.key==="PZ", color, labelKey);
+    if(dir.key==="PZ"||dir.key==="NZ"){
+      drawPageSymbol(dir.key==="PZ", color, labelKey);
     } else {
-      const dx =  dir.vec[0] * LEN;
-      const dy = -dir.vec[1] * LEN;
-      drawArrow(cx, cy, cx+dx, cy+dy, color, labelKey);
+      const ex = CX + dir.vec[0]*ALEN;
+      const ey = CY - dir.vec[1]*ALEN;
+      arrow(CX, CY, ex, ey, color, labelKey);
     }
   }
 
-  function fillBg(){
-    const g = ctx.createLinearGradient(0,0,0,canvas.height);
-    g.addColorStop(0,"#0f172a"); g.addColorStop(1,"#020617");
-    ctx.fillStyle=g;
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-  }
-
-  function drawGrid(){
+  function drawPageSymbol(outOfPage, color, labelKey){
+    const r = 34;
     ctx.save();
-    ctx.strokeStyle="rgba(148,163,184,.1)";
-    ctx.lineWidth=1;
-    const cx=CX(), cy=CY();
-    for(let i=-6;i<=6;i++){
-      ctx.beginPath(); ctx.moveTo(0,cy+i*40); ctx.lineTo(canvas.width,cy+i*40); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx+i*60,0); ctx.lineTo(cx+i*60,canvas.height); ctx.stroke();
+    ctx.shadowColor = color; ctx.shadowBlur = 20;
+    ctx.strokeStyle = color; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(CX,CY,r,0,Math.PI*2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    if(outOfPage){
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(CX,CY,10,0,Math.PI*2); ctx.fill();
+    } else {
+      ctx.lineCap = "round"; ctx.lineWidth = 5; ctx.strokeStyle = color;
+      const o=15;
+      ctx.beginPath(); ctx.moveTo(CX-o,CY-o); ctx.lineTo(CX+o,CY+o); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(CX+o,CY-o); ctx.lineTo(CX-o,CY+o); ctx.stroke();
     }
-    ctx.restore();
-  }
 
-  function drawAxes(){
-    const cx=CX(), cy=CY(), ext=LEN+50;
-    ctx.save();
-    ctx.strokeStyle="rgba(148,163,184,.4)";
-    ctx.lineWidth=2;
-    ctx.setLineDash([6,4]);
-    ctx.beginPath(); ctx.moveTo(cx-ext,cy); ctx.lineTo(cx+ext,cy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx,cy-ext); ctx.lineTo(cx,cy+ext); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle="#64748b"; ctx.font="16px Arial";
-    ctx.fillText("+x", cx+ext-18, cy-10);
-    ctx.fillText("-x", cx-ext+4,  cy-10);
-    ctx.fillText("+y", cx+10,     cy-ext+20);
-    ctx.fillText("-y", cx+10,     cy+ext-8);
-    ctx.restore();
-  }
+    // Place labels at fixed offsets that don't overlap
+    const offsets = { F:[60,-60], B:[-95,-60], I:[60,70] };
+    const [ox,oy] = offsets[labelKey]||[55,-55];
+    ctx.fillStyle = color; ctx.font = "bold 22px Arial";
+    ctx.fillText(labelKey, CX+ox, CY+oy);
 
-  function drawOriginDot(){
-    const cx=CX(), cy=CY();
+    // dashed connector
+    ctx.globalAlpha=0.4; ctx.strokeStyle=color;
+    ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
     ctx.beginPath();
-    ctx.arc(cx,cy,5,0,Math.PI*2);
-    ctx.fillStyle="#e2e8f0"; ctx.fill();
+    ctx.moveTo(CX+(ox>0?r+4:-r-4), CY+(oy>0?r*0.5:-r*0.5));
+    ctx.lineTo(CX+ox-2, CY+oy-16);
+    ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=1;
+    ctx.restore();
   }
 
-  function drawTitle(text){
-    ctx.fillStyle="#f8fafc";
-    ctx.font="bold 26px Arial";
-    ctx.fillText(text, 24, 42);
-  }
-
-  function drawInfoPanel(lines){
-    const x=canvas.width-248, y=18, w=224, h=32+lines.length*24;
-    roundRectFill(x,y,w,h,14,"rgba(11,18,32,.9)","#243244");
-    ctx.fillStyle="#94a3b8"; ctx.font="15px Arial";
-    lines.forEach((l,i)=> ctx.fillText(l, x+14, y+30+i*22));
-  }
-
-  function drawArrow(x1,y1,x2,y2,color,label){
+  function arrow(x1,y1,x2,y2,color,label){
+    const ang = Math.atan2(y2-y1,x2-x1), h=18;
     ctx.save();
     ctx.strokeStyle=color; ctx.lineWidth=7; ctx.lineCap="round";
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    const angle=Math.atan2(y2-y1,x2-x1), head=18;
+    ctx.fillStyle=color;
     ctx.beginPath();
     ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-head*Math.cos(angle-Math.PI/7), y2-head*Math.sin(angle-Math.PI/7));
-    ctx.lineTo(x2-head*Math.cos(angle+Math.PI/7), y2-head*Math.sin(angle+Math.PI/7));
-    ctx.closePath();
-    ctx.fillStyle=color; ctx.fill();
-    ctx.fillStyle=color; ctx.font="bold 22px Arial";
+    ctx.lineTo(x2-h*Math.cos(ang-Math.PI/7), y2-h*Math.sin(ang-Math.PI/7));
+    ctx.lineTo(x2-h*Math.cos(ang+Math.PI/7), y2-h*Math.sin(ang+Math.PI/7));
+    ctx.closePath(); ctx.fill();
+    ctx.font="bold 22px Arial"; ctx.fillStyle=color;
     ctx.fillText(label, x2+14, y2-14);
     ctx.restore();
   }
 
-  // Draw ⊙ or ⊗ at the origin (cx,cy) for out-of / into page directions
-  function drawPageSymbol(cx, cy, outOfPage, color, label){
-    ctx.save();
-    const r = 32;
+  function clear(){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"#0f172a"); g.addColorStop(1,"#020617");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  }
 
-    // Glowing ring
-    ctx.shadowColor = color;
-    ctx.shadowBlur  = 18;
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = 5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    if(outOfPage){
-      // Filled dot — coming toward viewer
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 9, 0, Math.PI*2);
-      ctx.fill();
-    } else {
-      // X — going away from viewer
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 5;
-      ctx.lineCap = "round";
-      const o = 14;
-      ctx.beginPath();
-      ctx.moveTo(cx-o, cy-o); ctx.lineTo(cx+o, cy+o); ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx+o, cy-o); ctx.lineTo(cx-o, cy+o); ctx.stroke();
+  function grid(){
+    ctx.save(); ctx.strokeStyle="rgba(148,163,184,.09)"; ctx.lineWidth=1;
+    for(let i=-7;i<=7;i++){
+      ctx.beginPath(); ctx.moveTo(0,CY+i*40); ctx.lineTo(W,CY+i*40); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(CX+i*58,0); ctx.lineTo(CX+i*58,H); ctx.stroke();
     }
-
-    // Label positioned offset from origin so it doesn't overlap multiple symbols
-    const labelOffsets = { F:[55,-55], B:[-85,-55], I:[55,60] };
-    const [ox,oy] = labelOffsets[label] || [50,-50];
-    ctx.fillStyle = color;
-    ctx.font = "bold 22px Arial";
-    ctx.fillText(label, cx+ox, cy+oy);
-
-    // Thin line connecting label to origin
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.45;
-    ctx.setLineDash([4,3]);
-    ctx.beginPath();
-    ctx.moveTo(cx+ox-4, cy+oy-14);
-    ctx.lineTo(cx+(ox>0?r:-r), cy+(oy>0?r:-r));
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
-  function roundRectFill(x,y,w,h,r,fill,stroke){
+  function axes(){
+    const ext=ALEN+55;
     ctx.save();
-    ctx.beginPath();
+    ctx.strokeStyle="rgba(148,163,184,.35)"; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(CX-ext,CY); ctx.lineTo(CX+ext,CY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CX,CY-ext); ctx.lineTo(CX,CY+ext); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="#64748b"; ctx.font="15px Arial";
+    ctx.fillText("+x",CX+ext-18,CY-8);
+    ctx.fillText("-x",CX-ext+4,CY-8);
+    ctx.fillText("+y",CX+8,CY-ext+18);
+    ctx.fillText("-y",CX+8,CY+ext-4);
+    ctx.restore();
+  }
+
+  function originDot(){
+    ctx.beginPath(); ctx.arc(CX,CY,5,0,Math.PI*2);
+    ctx.fillStyle="#e2e8f0"; ctx.fill();
+  }
+
+  function title(txt){
+    ctx.fillStyle="#f8fafc"; ctx.font="bold 24px Arial";
+    ctx.fillText(txt,22,38);
+  }
+
+  function infoBox(lines){
+    const x=W-238, y=16, w=220, h=28+lines.length*22;
+    rrect(x,y,w,h,12,"rgba(11,18,32,.9)","#243244");
+    ctx.fillStyle="#94a3b8"; ctx.font="14px Arial";
+    lines.forEach((l,i)=>ctx.fillText(l,x+12,y+26+i*21));
+  }
+
+  function rrect(x,y,w,h,r,fill,stroke){
+    ctx.save(); ctx.beginPath();
     ctx.moveTo(x+r,y);
     ctx.arcTo(x+w,y,x+w,y+h,r);
     ctx.arcTo(x+w,y+h,x,y+h,r);
     ctx.arcTo(x,y+h,x,y,r);
     ctx.arcTo(x,y,x+w,y,r);
     ctx.closePath();
-    if(fill){ctx.fillStyle=fill; ctx.fill();}
-    if(stroke){ctx.strokeStyle=stroke; ctx.lineWidth=1.2; ctx.stroke();}
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke();}
     ctx.restore();
   }
+
+})(); // end IIFE
 </script>
 </body>
 </html>
