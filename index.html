@@ -1,617 +1,586 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Magnetic Force Direction Game</title>
-  <style>
-    :root{
-      --bg:#0f172a; --panel:#111827; --panel2:#1f2937;
-      --text:#e5e7eb; --muted:#94a3b8;
-      --force:#f59e0b; --field:#06b6d4; --current:#a78bfa;
-    }
-    *{box-sizing:border-box; margin:0; padding:0;}
-    body{
-      font-family:Arial,Helvetica,sans-serif;
-      background:linear-gradient(180deg,#020617,#0f172a);
-      color:var(--text);
-      min-height:100vh;
-    }
-    .wrap{max-width:1200px;margin:0 auto;padding:16px;}
-    h1{font-size:26px;color:#f8fafc;margin-bottom:6px;}
-    .subtitle{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:14px;}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Magnetic Force Direction Game</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#0f172a;
+  color:#e5e7eb;
+  min-height:100vh;
+  padding:16px;
+}
+h1{font-size:24px;color:#f8fafc;margin-bottom:6px;}
+.sub{color:#94a3b8;font-size:13px;margin-bottom:14px;line-height:1.5;}
 
-    .grid{
-      display:grid;
-      grid-template-columns:320px 1fr;
-      gap:14px;
-    }
-    .panel{
-      background:rgba(17,24,39,.95);
-      border:1px solid #1e293b;
-      border-radius:16px;
-      padding:14px;
-      box-shadow:0 8px 24px rgba(0,0,0,.3);
-    }
+.layout{display:grid;grid-template-columns:300px 1fr;gap:14px;}
+@media(max-width:800px){.layout{grid-template-columns:1fr;}}
 
-    /* buttons */
-    .btn{
-      border:none; border-radius:10px; padding:10px 18px;
-      cursor:pointer; font:inherit; font-size:15px;
-      color:white; background:#2563eb;
-      transition:.15s ease;
-    }
-    .btn:hover{filter:brightness(1.1);}
-    .btn.sec{background:#374151;}
-    .ctrl-row{display:flex;gap:8px;margin-bottom:12px;}
+.card{
+  background:#111827;
+  border:1px solid #1e293b;
+  border-radius:14px;
+  padding:14px;
+}
 
-    /* stats */
-    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
-    .stat{
-      background:var(--panel2); border:1px solid #273449;
-      border-radius:10px; padding:10px 12px;
-    }
-    .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-    .stat .val{font-size:22px;font-weight:700;}
+/* Controls */
+.ctrl{display:flex;gap:8px;margin-bottom:12px;}
+button{
+  font:inherit;cursor:pointer;
+  border:none;border-radius:10px;
+  padding:10px 18px;color:#fff;
+  background:#2563eb;transition:filter .15s;
+}
+button:hover{filter:brightness(1.15);}
+button.sec{background:#374151;}
 
-    /* question box */
-    .qbox{
-      background:#0b1220; border:1px solid #1e293b;
-      border-radius:10px; padding:12px;
-      line-height:1.55; margin-bottom:12px;
-      min-height:60px; font-size:15px;
-    }
+/* Stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.st{background:#1f2937;border:1px solid #273449;border-radius:10px;padding:10px 12px;}
+.st-l{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.st-v{font-size:22px;font-weight:700;}
 
-    /* answer choices */
-    .choices{
-      display:grid; grid-template-columns:repeat(3,1fr);
-      gap:8px; margin-bottom:12px;
-    }
-    .choice{
-      background:#1f2937; border:1px solid #334155;
-      border-radius:12px; padding:12px 8px;
-      cursor:pointer; color:#f8fafc;
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      gap:4px; min-height:72px;
-      transition:.14s ease;
-      font:inherit;
-    }
-    .choice:not(:disabled):hover{
-      background:#273449; border-color:#475569;
-      transform:translateY(-2px);
-    }
-    .choice:disabled{opacity:.35; cursor:not-allowed;}
-    .choice .sym{font-size:26px;font-weight:900;}
-    .choice .lbl{font-size:12px;color:#94a3b8;text-align:center;}
+/* Question */
+.qbox{
+  background:#0b1220;border:1px solid #1e293b;
+  border-radius:10px;padding:12px;
+  font-size:14px;line-height:1.6;
+  margin-bottom:12px;min-height:56px;
+}
 
-    /* status */
-    .status{
-      border-radius:10px; padding:10px 12px;
-      background:#0b1220; border:1px solid #1e293b;
-      font-size:14px; line-height:1.4; min-height:42px;
-      margin-bottom:12px;
-    }
-    .status.good{border-color:rgba(34,197,94,.6);color:#bbf7d0;}
-    .status.bad{border-color:rgba(239,68,68,.6);color:#fecaca;}
+/* Choices */
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.ch{
+  background:#1f2937;border:1px solid #334155;
+  border-radius:12px;padding:12px 8px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:4px;min-height:70px;color:#f8fafc;
+  cursor:pointer;transition:background .13s,transform .13s;
+}
+.ch:hover:not([disabled]){background:#273449;transform:translateY(-2px);}
+.ch[disabled]{opacity:.3;cursor:not-allowed;}
+.ch .s{font-size:28px;font-weight:900;}
+.ch .n{font-size:11px;color:#94a3b8;text-align:center;}
 
-    /* legend */
-    .legend{display:grid;gap:6px;margin-bottom:10px;}
-    .leg-item{
-      display:flex; align-items:center; gap:8px;
-      padding:7px 10px; background:#0b1220;
-      border:1px solid #1e293b; border-radius:8px;
-      font-size:13px; color:#dbeafe;
-    }
-    .dot{width:12px;height:12px;border-radius:50%;flex:0 0 12px;}
+/* Status */
+.status{
+  border-radius:10px;padding:10px 12px;
+  background:#0b1220;border:1px solid #1e293b;
+  font-size:13px;min-height:40px;margin-bottom:12px;
+}
+.status.ok{border-color:rgba(34,197,94,.5);color:#bbf7d0;}
+.status.err{border-color:rgba(239,68,68,.5);color:#fecaca;}
 
-    .note{color:var(--muted);font-size:12px;line-height:1.5;}
-    .pill{
-      display:inline-block; border-radius:999px;
-      padding:3px 9px; background:#082f49;
-      border:1px solid #0c4a6e; color:#bae6fd;
-      font-size:11px; margin:2px 4px 2px 0;
-    }
+/* Legend */
+.legend{display:grid;gap:6px;margin-bottom:10px;}
+.leg{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;background:#0b1220;
+  border:1px solid #1e293b;border-radius:8px;font-size:13px;
+}
+.dot{width:11px;height:11px;border-radius:50%;}
 
-    /* canvas wrapper */
-    .cw{position:relative;width:100%;}
-    canvas{
-      display:block; width:100%; height:auto;
-      border:1px solid #1e293b; border-radius:14px;
-    }
+/* Canvas panel */
+.canvas-wrap{position:relative;}
+canvas{display:block;width:100%;height:auto;border-radius:12px;border:1px solid #1e293b;}
 
-    /* feedback overlay */
-    .fb-overlay{
-      position:absolute; inset:0;
-      display:none; align-items:center; justify-content:center;
-      border-radius:14px; pointer-events:none;
-    }
-    .fb-overlay.show{display:flex;}
-    .fb-mark{
-      font-size:180px; font-weight:900; line-height:1;
-      animation:popIn .2s cubic-bezier(.3,1.5,.5,1) both;
-    }
-    .fb-overlay.ok{background:rgba(0,0,0,.15);}
-    .fb-overlay.ok .fb-mark{color:#22c55e; filter:drop-shadow(0 0 24px #22c55e);}
-    .fb-overlay.err{background:rgba(0,0,0,.15);}
-    .fb-overlay.err .fb-mark{color:#ef4444; filter:drop-shadow(0 0 24px #ef4444);}
-    @keyframes popIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+/* Feedback overlay */
+#fbOverlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;pointer-events:none;
+  opacity:0;transition:opacity .15s;
+}
+#fbOverlay.show{opacity:1;}
+#fbMark{
+  font-size:160px;font-weight:900;line-height:1;
+  animation:pop .2s cubic-bezier(.3,1.5,.5,1) both;
+}
+.fb-ok #fbMark{color:#22c55e;filter:drop-shadow(0 0 30px #22c55e);}
+.fb-err #fbMark{color:#ef4444;filter:drop-shadow(0 0 30px #ef4444);}
+@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
 
-    /* summary screen */
-    #summary{
-      display:none; position:fixed; inset:0; z-index:200;
-      background:rgba(2,6,23,.92); backdrop-filter:blur(8px);
-      align-items:center; justify-content:center;
-    }
-    #summary.show{display:flex;}
-    .sum-card{
-      background:#111827; border:1px solid #1e293b;
-      border-radius:22px; padding:36px 44px;
-      max-width:460px; width:92%; text-align:center;
-      box-shadow:0 24px 64px rgba(0,0,0,.6);
-      animation:popIn .25s cubic-bezier(.3,1.4,.5,1) both;
-    }
-    .trophy{font-size:64px;margin-bottom:8px;}
-    .sum-card h2{font-size:28px;color:#f8fafc;margin-bottom:4px;}
-    .sum-card p{color:var(--muted);font-size:14px;margin-bottom:16px;}
-    .bar-wrap{background:#0b1220;border-radius:999px;height:9px;margin-bottom:20px;overflow:hidden;border:1px solid #1e293b;}
-    .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#22c55e,#38bdf8);transition:width .6s ease;}
-    .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
-    .sum-stat{background:#1f2937;border:1px solid #273449;border-radius:12px;padding:14px 10px;}
-    .sum-stat .sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
-    .sum-stat .sv{font-size:28px;font-weight:700;color:#f8fafc;}
-    .play-again{
-      padding:13px 30px; font-size:16px; border:none;
-      border-radius:12px; background:#2563eb; color:white;
-      cursor:pointer; font:inherit; transition:.15s ease;
-    }
-    .play-again:hover{filter:brightness(1.1);}
-
-    @media(max-width:860px){
-      .grid{grid-template-columns:1fr;}
-      .choices{grid-template-columns:repeat(2,1fr);}
-    }
-  </style>
+/* Summary overlay */
+#summaryOverlay{
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(2,6,23,.93);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+#summaryOverlay.show{display:flex;}
+.sum{
+  background:#111827;border:1px solid #1e293b;
+  border-radius:20px;padding:36px 44px;
+  max-width:440px;width:90%;text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+}
+.sum h2{font-size:26px;color:#f8fafc;margin-bottom:4px;}
+.sum p{color:#94a3b8;font-size:13px;margin-bottom:16px;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.ss{background:#1f2937;border:1px solid #273449;border-radius:12px;padding:14px 10px;}
+.ss-l{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.ss-v{font-size:26px;font-weight:700;}
+.bar-bg{background:#0b1220;border-radius:999px;height:8px;margin-bottom:18px;overflow:hidden;}
+.bar-fg{height:100%;border-radius:999px;background:linear-gradient(90deg,#22c55e,#38bdf8);width:0%;transition:width .6s ease;}
+</style>
 </head>
 <body>
 
-<!-- SUMMARY OVERLAY -->
-<div id="summary">
-  <div class="sum-card">
-    <div class="trophy">🏆</div>
+<div id="summaryOverlay">
+  <div class="sum">
+    <div style="font-size:60px;margin-bottom:8px;">🏆</div>
     <h2>Game Complete!</h2>
-    <p>You finished 5 correct rounds!</p>
-    <div class="bar-wrap"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    <p>You completed 5 correct rounds!</p>
+    <div class="bar-bg"><div class="bar-fg" id="barFg"></div></div>
     <div class="sum-grid">
-      <div class="sum-stat"><div class="sl">Final Time</div><div class="sv" id="sTime">—</div></div>
-      <div class="sum-stat"><div class="sl">Total Attempts</div><div class="sv" id="sAttempts">—</div></div>
-      <div class="sum-stat"><div class="sl">Accuracy</div><div class="sv" id="sAccuracy">—</div></div>
-      <div class="sum-stat"><div class="sl">Wrong Answers</div><div class="sv" id="sWrong">—</div></div>
+      <div class="ss"><div class="ss-l">Time</div><div class="ss-v" id="sTime">—</div></div>
+      <div class="ss"><div class="ss-l">Attempts</div><div class="ss-v" id="sAttempts">—</div></div>
+      <div class="ss"><div class="ss-l">Accuracy</div><div class="ss-v" id="sAccuracy">—</div></div>
+      <div class="ss"><div class="ss-l">Wrong</div><div class="ss-v" id="sWrong">—</div></div>
     </div>
-    <button class="play-again" id="playAgainBtn">▶ Play Again</button>
+    <button id="playAgainBtn" style="padding:13px 30px;font-size:15px;">▶ Play Again</button>
   </div>
 </div>
 
-<div class="wrap">
-  <h1>⚡ Magnetic Force Direction Game</h1>
-  <p class="subtitle">
-    Apply the motor effect (<strong>F = IL × B</strong>). Two of the three vectors are shown — pick the missing direction.
-    Complete <strong>5 correct rounds</strong> as fast as you can!
-  </p>
+<h1>⚡ Magnetic Force Direction Game</h1>
+<p class="sub">
+  Two of three vectors (F, B, I) are shown. Choose the missing direction using <strong>F = IL × B</strong>.
+  Complete <strong>5 correct rounds</strong> as fast as you can!
+</p>
 
-  <div class="grid">
-    <!-- LEFT PANEL -->
-    <div class="panel">
-      <div class="ctrl-row">
-        <button class="btn" id="startBtn">▶ Start</button>
-        <button class="btn sec" id="resetBtn">↺ Reset</button>
-      </div>
-
-      <div class="stat-grid">
-        <div class="stat"><div class="lbl">Round</div><div class="val" id="dRound">0 / 5</div></div>
-        <div class="stat"><div class="lbl">Time</div><div class="val" id="dTime">00:00.0</div></div>
-        <div class="stat"><div class="lbl">Correct</div><div class="val" id="dCorrect">0</div></div>
-        <div class="stat"><div class="lbl">Attempts</div><div class="val" id="dAttempts">0</div></div>
-      </div>
-
-      <div class="qbox" id="qbox">
-        Press <strong>▶ Start</strong> to begin. The timer starts immediately.
-      </div>
-
-      <div class="choices" id="choicesBox"></div>
-
-      <div class="status" id="statusBox">Ready to play.</div>
-
-      <div class="legend">
-        <div class="leg-item"><span class="dot" style="background:#f59e0b"></span> F — force on the wire</div>
-        <div class="leg-item"><span class="dot" style="background:#06b6d4"></span> B — magnetic field</div>
-        <div class="leg-item"><span class="dot" style="background:#a78bfa"></span> I — conventional current</div>
-      </div>
-      <div class="note">
-        <span class="pill">5 correct = win</span>
-        <span class="pill">Wrong = new question, same round</span>
-        <span class="pill">⊙ out of page &nbsp;⊗ into page</span>
-      </div>
+<div class="layout">
+  <!-- LEFT -->
+  <div class="card">
+    <div class="ctrl">
+      <button id="startBtn">▶ Start</button>
+      <button id="resetBtn" class="sec">↺ Reset</button>
     </div>
 
-    <!-- RIGHT PANEL -->
-    <div class="panel" style="padding:0;overflow:hidden;">
-      <div class="cw">
-        <canvas id="scene" width="820" height="520"></canvas>
-        <div class="fb-overlay" id="fbOverlay">
-          <span class="fb-mark" id="fbMark"></span>
-        </div>
+    <div class="stats">
+      <div class="st"><div class="st-l">Round</div><div class="st-v" id="dRound">0/5</div></div>
+      <div class="st"><div class="st-l">Time</div><div class="st-v" id="dTime">00:00.0</div></div>
+      <div class="st"><div class="st-l">Correct</div><div class="st-v" id="dCorrect">0</div></div>
+      <div class="st"><div class="st-l">Attempts</div><div class="st-v" id="dAttempts">0</div></div>
+    </div>
+
+    <div class="qbox" id="qbox">Press <strong>▶ Start</strong> to begin.</div>
+
+    <div class="choices" id="choicesDiv"></div>
+
+    <div class="status" id="statusDiv">Ready.</div>
+
+    <div class="legend">
+      <div class="leg"><span class="dot" style="background:#f59e0b;"></span>F — force on wire</div>
+      <div class="leg"><span class="dot" style="background:#06b6d4;"></span>B — magnetic field</div>
+      <div class="leg"><span class="dot" style="background:#a78bfa;"></span>I — conventional current</div>
+    </div>
+    <p style="color:#64748b;font-size:12px;margin-top:8px;">
+      <span style="background:#082f49;border:1px solid #0c4a6e;border-radius:999px;padding:2px 8px;color:#bae6fd;margin-right:4px;">⊙ out of page</span>
+      <span style="background:#082f49;border:1px solid #0c4a6e;border-radius:999px;padding:2px 8px;color:#bae6fd;">⊗ into page</span>
+    </p>
+  </div>
+
+  <!-- RIGHT: canvas -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="canvas-wrap">
+      <canvas id="myCanvas" width="820" height="520"></canvas>
+      <div id="fbOverlay">
+        <span id="fbMark"></span>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-(function(){
-  "use strict";
+document.addEventListener("DOMContentLoaded", function() {
 
-  // ── Constants ─────────────────────────────────────────────────
-  const WIN = 5;
-
-  const DIRS = [
-    { key:"PX", name:"Right",       short:"+x", sym:"→",  vec:[1,0,0]  },
-    { key:"NX", name:"Left",        short:"-x", sym:"←",  vec:[-1,0,0] },
-    { key:"PY", name:"Up",          short:"+y", sym:"↑",  vec:[0,1,0]  },
-    { key:"NY", name:"Down",        short:"-y", sym:"↓",  vec:[0,-1,0] },
-    { key:"PZ", name:"Out of page", short:"+z", sym:"⊙",  vec:[0,0,1]  },
-    { key:"NZ", name:"Into page",   short:"-z", sym:"⊗",  vec:[0,0,-1] },
+  // ── Direction data ──────────────────────────────────────────────────────
+  var DIRS = [
+    { key:"PX", name:"Right",       short:"+x", sym:"→", vec:[1,0,0]  },
+    { key:"NX", name:"Left",        short:"-x", sym:"←", vec:[-1,0,0] },
+    { key:"PY", name:"Up",          short:"+y", sym:"↑", vec:[0,1,0]  },
+    { key:"NY", name:"Down",        short:"-y", sym:"↓", vec:[0,-1,0] },
+    { key:"PZ", name:"Out of page", short:"+z", sym:"⊙", vec:[0,0,1]  },
+    { key:"NZ", name:"Into page",   short:"-z", sym:"⊗", vec:[0,0,-1] }
   ];
+  var COLORS = { F:"#f59e0b", B:"#06b6d4", I:"#a78bfa" };
+  var LABELS = { F:"Force (F)", B:"Magnetic field (B)", I:"Current (I)" };
+  var WIN = 5;
 
-  const COL = { F:"#f59e0b", B:"#06b6d4", I:"#a78bfa" };
-  const LBL = { F:"Force (F)", B:"Magnetic field (B)", I:"Current (I)" };
+  // ── Canvas setup ────────────────────────────────────────────────────────
+  var canvas = document.getElementById("myCanvas");
+  var ctx    = canvas.getContext("2d");
+  var CW = canvas.width;   // 820
+  var CH = canvas.height;  // 520
+  var OX = CW * 0.5;       // origin x = 410
+  var OY = CH * 0.56;      // origin y = 291
+  var ALEN = 130;           // arrow length
 
-  // ── DOM ───────────────────────────────────────────────────────
-  const canvas     = document.getElementById("scene");
-  const ctx        = canvas.getContext("2d");
-  const startBtn   = document.getElementById("startBtn");
-  const resetBtn   = document.getElementById("resetBtn");
-  const qbox       = document.getElementById("qbox");
-  const choicesBox = document.getElementById("choicesBox");
-  const statusBox  = document.getElementById("statusBox");
-  const dRound     = document.getElementById("dRound");
-  const dTime      = document.getElementById("dTime");
-  const dCorrect   = document.getElementById("dCorrect");
-  const dAttempts  = document.getElementById("dAttempts");
-  const fbOverlay  = document.getElementById("fbOverlay");
-  const fbMark     = document.getElementById("fbMark");
-  const summary    = document.getElementById("summary");
-  const barFill    = document.getElementById("barFill");
-  const sTime      = document.getElementById("sTime");
-  const sAttempts  = document.getElementById("sAttempts");
-  const sAccuracy  = document.getElementById("sAccuracy");
-  const sWrong     = document.getElementById("sWrong");
-  const playAgainBtn = document.getElementById("playAgainBtn");
+  // ── DOM refs ────────────────────────────────────────────────────────────
+  var startBtn      = document.getElementById("startBtn");
+  var resetBtn      = document.getElementById("resetBtn");
+  var qbox          = document.getElementById("qbox");
+  var choicesDiv    = document.getElementById("choicesDiv");
+  var statusDiv     = document.getElementById("statusDiv");
+  var dRound        = document.getElementById("dRound");
+  var dTime         = document.getElementById("dTime");
+  var dCorrect      = document.getElementById("dCorrect");
+  var dAttempts     = document.getElementById("dAttempts");
+  var fbOverlay     = document.getElementById("fbOverlay");
+  var fbMark        = document.getElementById("fbMark");
+  var summaryOverlay= document.getElementById("summaryOverlay");
+  var barFg         = document.getElementById("barFg");
+  var sTime         = document.getElementById("sTime");
+  var sAttempts     = document.getElementById("sAttempts");
+  var sAccuracy     = document.getElementById("sAccuracy");
+  var sWrong        = document.getElementById("sWrong");
+  var playAgainBtn  = document.getElementById("playAgainBtn");
 
-  // ── State ─────────────────────────────────────────────────────
-  let round=0, correct=0, attempts=0, wrongCount=0;
-  let active=false, locked=false;
-  let t0=0, elapsed=0, ticker=null;
-  let Q=null; // current question
+  // ── Game state ──────────────────────────────────────────────────────────
+  var round=0, correct=0, attempts=0, wrongCount=0;
+  var gameActive=false, locked=false;
+  var timerID=null, startTime=0, elapsed=0;
+  var Q=null;
 
-  // ── Bootstrap ─────────────────────────────────────────────────
-  buildButtons();
+  // ── Build choice buttons (once) ─────────────────────────────────────────
+  DIRS.forEach(function(d) {
+    var btn = document.createElement("button");
+    btn.className = "ch";
+    btn.setAttribute("data-key", d.key);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="s">'+d.sym+'</span><span class="n">'+d.name+'<br><small>'+d.short+'</small></span>';
+    btn.addEventListener("click", function() {
+      handleAnswer(d.key);
+    });
+    choicesDiv.appendChild(btn);
+  });
+
+  // ── Event listeners ─────────────────────────────────────────────────────
+  startBtn.addEventListener("click", function() {
+    startGame();
+  });
+  resetBtn.addEventListener("click", function() {
+    resetGame();
+  });
+  playAgainBtn.addEventListener("click", function() {
+    summaryOverlay.classList.remove("show");
+    resetGame();
+  });
+
+  // ── Initial draw ────────────────────────────────────────────────────────
   drawIdle();
 
-  startBtn.addEventListener("click", startGame);
-  resetBtn.addEventListener("click", resetGame);
-  playAgainBtn.addEventListener("click", ()=>{ summary.classList.remove("show"); resetGame(); });
+  // ── GAME FUNCTIONS ───────────────────────────────────────────────────────
 
-  // ── Game flow ─────────────────────────────────────────────────
-  function startGame(){
-    round=1; correct=0; attempts=0; wrongCount=0;
-    active=true; locked=false; elapsed=0;
-    t0 = performance.now();
-    summary.classList.remove("show");
-    hideFeedback();
+  function startGame() {
+    round = 1; correct = 0; attempts = 0; wrongCount = 0;
+    gameActive = true; locked = false; elapsed = 0;
+    startTime = Date.now();
+    summaryOverlay.classList.remove("show");
+    clearFeedback();
+    updateStats();
     setStatus("Game started! Choose the missing direction.", "");
-    tick(); // start timer
-    newQuestion();
+    stopTimer();
+    timerID = setInterval(function() {
+      if (!gameActive) return;
+      elapsed = Date.now() - startTime;
+      dTime.textContent = fmtTime(elapsed);
+    }, 100);
+    nextQuestion();
   }
 
-  function resetGame(){
-    clearTimeout(ticker); ticker=null;
-    active=false; locked=false; elapsed=0;
-    round=0; correct=0; attempts=0; wrongCount=0; Q=null;
-    dTime.textContent="00:00.0";
+  function resetGame() {
+    stopTimer();
+    gameActive = false; locked = false; elapsed = 0;
+    round = 0; correct = 0; attempts = 0; wrongCount = 0; Q = null;
+    dTime.textContent = "00:00.0";
     updateStats();
-    qbox.innerHTML="Press <strong>▶ Start</strong> to begin. Timer starts immediately.";
-    setStatus("Ready to play.","");
-    hideFeedback();
-    setChoicesEnabled(false);
+    qbox.innerHTML = "Press <strong>▶ Start</strong> to begin.";
+    setStatus("Ready.", "");
+    clearFeedback();
+    disableAllChoices();
     drawIdle();
   }
 
-  function newQuestion(){
-    if(!active) return;
+  function nextQuestion() {
     Q = makeQuestion();
-    qbox.innerHTML =
-      `Round <strong>${round}</strong> / <strong>${WIN}</strong> &nbsp;—&nbsp;
-       Choose the direction of <strong>${LBL[Q.unknown]}</strong>.`;
-    setChoicesEnabled(true);
     locked = false;
-    hideFeedback();
+    enableAllChoices();
+    clearFeedback();
+    qbox.innerHTML = "Round <strong>"+round+"</strong>/"+WIN+
+      " &nbsp;— Find the direction of <strong>"+LABELS[Q.unknown]+"</strong>.";
     updateStats();
     drawScene();
   }
 
-  function submitAnswer(key){
-    if(!active || locked || !Q) return;
+  function handleAnswer(key) {
+    if (!gameActive || locked || !Q) return;
     locked = true;
+    disableAllChoices();
     attempts++;
-    setChoicesEnabled(false);
 
-    if(key === Q.answerKey){
+    if (key === Q.answerKey) {
       correct++;
       showFeedback(true);
-      setStatus(`✓ Correct! ${LBL[Q.unknown]} is <strong>${dirByKey(key).name}</strong>.`, "good");
+      setStatus("✓ Correct! "+LABELS[Q.unknown]+" is "+getDirByKey(key).name+".", "ok");
       round++;
       updateStats();
-      setTimeout(()=>{
-        hideFeedback();
-        if(correct >= WIN){ endGame(); }
-        else { newQuestion(); }
-      }, 950);
+      setTimeout(function() {
+        clearFeedback();
+        if (correct >= WIN) {
+          endGame();
+        } else {
+          nextQuestion();
+        }
+      }, 1000);
     } else {
       wrongCount++;
       showFeedback(false);
-      setStatus(`✗ Incorrect. A new question for the same round will appear.`, "bad");
+      setStatus("✗ Wrong answer. New question for the same round.", "err");
       updateStats();
-      setTimeout(()=>{
-        hideFeedback();
-        newQuestion();
-      }, 950);
+      setTimeout(function() {
+        clearFeedback();
+        nextQuestion();
+      }, 1000);
     }
   }
 
-  function endGame(){
-    active = false;
+  function endGame() {
+    gameActive = false;
     locked = true;
-    clearTimeout(ticker); ticker = null;
-    const acc = Math.round(WIN / Math.max(attempts,WIN) * 100);
+    stopTimer();
+    var acc = Math.round(WIN / Math.max(attempts, WIN) * 100);
     sTime.textContent     = fmtTime(elapsed);
     sAttempts.textContent = String(attempts);
     sAccuracy.textContent = acc + "%";
     sWrong.textContent    = String(wrongCount);
-    setTimeout(()=>{ barFill.style.width = acc + "%"; }, 100);
-    summary.classList.add("show");
+    summaryOverlay.classList.add("show");
+    setTimeout(function() { barFg.style.width = acc + "%"; }, 150);
   }
 
-  // ── Timer ─────────────────────────────────────────────────────
-  function tick(){
-    if(!active) return;
-    elapsed = performance.now() - t0;
-    dTime.textContent = fmtTime(elapsed);
-    ticker = setTimeout(tick, 100);
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  function stopTimer() {
+    if (timerID) { clearInterval(timerID); timerID = null; }
   }
 
-  // ── Question factory ──────────────────────────────────────────
-  function makeQuestion(){
-    // pick random I, then perpendicular B, compute F = I x B
-    const I = randFrom(DIRS);
-    const Bcandidates = DIRS.filter(d => dot(d.vec, I.vec) === 0);
-    const B = randFrom(Bcandidates);
-    const Fvec = cross(I.vec, B.vec);
-    const F = DIRS.find(d => vecEq(d.vec, Fvec));
-    const unknown = randFrom(["F","B","I"]);
-    return {
-      F, B, I, unknown,
-      shown: ["F","B","I"].filter(k => k !== unknown),
-      answerKey: {F:F.key, B:B.key, I:I.key}[unknown]
-    };
-  }
-
-  // ── UI helpers ────────────────────────────────────────────────
-  function updateStats(){
-    dRound.textContent    = `${Math.min(round,WIN)} / ${WIN}`;
+  function updateStats() {
+    dRound.textContent    = Math.min(round, WIN) + "/" + WIN;
     dCorrect.textContent  = String(correct);
     dAttempts.textContent = String(attempts);
   }
 
-  function setStatus(html, cls){
-    statusBox.innerHTML = html;
-    statusBox.className = "status" + (cls ? " "+cls : "");
+  function setStatus(text, cls) {
+    statusDiv.textContent = text;
+    statusDiv.className   = "status" + (cls ? " "+cls : "");
   }
 
-  function showFeedback(ok){
+  function showFeedback(ok) {
     fbMark.textContent = ok ? "✓" : "✗";
-    fbOverlay.className = "fb-overlay show " + (ok ? "ok" : "err");
+    fbOverlay.className = ok ? "show fb-ok" : "show fb-err";
   }
 
-  function hideFeedback(){
-    fbOverlay.className = "fb-overlay";
+  function clearFeedback() {
+    fbOverlay.className = "";
+    fbMark.textContent  = "";
   }
 
-  function setChoicesEnabled(on){
-    choicesBox.querySelectorAll("button.choice").forEach(b => {
-      b.disabled = !on;
-    });
+  function enableAllChoices() {
+    var btns = choicesDiv.querySelectorAll("button");
+    for (var i=0; i<btns.length; i++) btns[i].disabled = false;
   }
 
-  function buildButtons(){
-    choicesBox.innerHTML = "";
-    DIRS.forEach(d => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "choice";
-      btn.disabled = true;
-      btn.innerHTML =
-        `<span class="sym">${d.sym}</span>
-         <span class="lbl">${d.name}<br><small>${d.short}</small></span>`;
-      btn.addEventListener("click", () => submitAnswer(d.key));
-      choicesBox.appendChild(btn);
-    });
+  function disableAllChoices() {
+    var btns = choicesDiv.querySelectorAll("button");
+    for (var i=0; i<btns.length; i++) btns[i].disabled = true;
   }
 
-  // ── Math ──────────────────────────────────────────────────────
-  function dot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
-  function cross(a,b){
+  function getDirByKey(k) {
+    for (var i=0; i<DIRS.length; i++) if (DIRS[i].key===k) return DIRS[i];
+    return null;
+  }
+
+  function fmtTime(ms) {
+    var t = Math.floor(ms/100);
+    var m = Math.floor(t/600);
+    var s = Math.floor((t%600)/10);
+    var f = t%10;
+    return pad2(m)+":"+pad2(s)+"."+f;
+  }
+  function pad2(n) { return n<10?"0"+n:String(n); }
+
+  // ── Question generation ──────────────────────────────────────────────────
+
+  function dot(a,b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+  function cross(a,b) {
     return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
   }
-  function vecEq(a,b){ return a[0]===b[0] && a[1]===b[1] && a[2]===b[2]; }
-  function randFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function dirByKey(k){ return DIRS.find(d=>d.key===k); }
-  function fmtTime(ms){
-    const t=Math.floor(ms/100);
-    const m=Math.floor(t/600), s=Math.floor((t%600)/10), f=t%10;
-    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${f}`;
+  function vecEq(a,b) { return a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2]; }
+  function randFrom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+  function makeQuestion() {
+    var I = randFrom(DIRS);
+    var Blist = [];
+    for (var i=0; i<DIRS.length; i++) {
+      if (dot(DIRS[i].vec, I.vec) === 0) Blist.push(DIRS[i]);
+    }
+    var B = randFrom(Blist);
+    var Fvec = cross(I.vec, B.vec);
+    var F = null;
+    for (var j=0; j<DIRS.length; j++) {
+      if (vecEq(DIRS[j].vec, Fvec)) { F=DIRS[j]; break; }
+    }
+    var unknownList = ["F","B","I"];
+    var unknown = randFrom(unknownList);
+    var map = { F:F, B:B, I:I };
+    var shown = [];
+    for (var k=0; k<unknownList.length; k++) {
+      if (unknownList[k]!==unknown) shown.push(unknownList[k]);
+    }
+    return {
+      F: F, B: B, I: I,
+      unknown: unknown,
+      shown: shown,
+      answerKey: map[unknown].key
+    };
   }
 
-  // ── Drawing ───────────────────────────────────────────────────
-  const W = canvas.width, H = canvas.height;
-  const CX = W*0.5, CY = H*0.56;
-  const ALEN = 130; // arrow length in canvas px
+  // ── Drawing ──────────────────────────────────────────────────────────────
 
-  function drawIdle(){
-    clear();
-    grid();
-    axes();
-    originDot();
-    title("Press ▶ Start to begin");
-    infoBox(["F = IL × B  (motor effect)","• / ⊙ = out of page","⊗ = into page"]);
+  function drawIdle() {
+    clearCanvas();
+    drawGrid();
+    drawAxes();
+    drawOriginDot();
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "bold 22px Arial";
+    ctx.fillText("Press ▶ Start to begin", 22, 36);
+    drawInfoBox(["F = IL × B", "⊙ = out of page", "⊗ = into page"]);
   }
 
-  function drawScene(){
-    if(!Q){ drawIdle(); return; }
-    clear();
-    grid();
-    axes();
-    originDot();
-    Q.shown.forEach(k => drawQuantity(Q[k], COL[k], k));
-    title(`Find the direction of: ${LBL[Q.unknown]}`);
-    infoBox([
-      `Known: ${Q.shown.map(k=>LBL[k]).join(" & ")}`,
-      `Missing: ${LBL[Q.unknown]}`,
-      "⊙ = out of page   ⊗ = into page"
+  function drawScene() {
+    if (!Q) { drawIdle(); return; }
+    clearCanvas();
+    drawGrid();
+    drawAxes();
+    // Draw known quantities
+    for (var i=0; i<Q.shown.length; i++) {
+      var k = Q.shown[i];
+      drawQuantity(Q[k], COLORS[k], k);
+    }
+    drawOriginDot();
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "bold 22px Arial";
+    ctx.fillText("Find direction of: "+LABELS[Q.unknown], 22, 36);
+    drawInfoBox([
+      "Known: "+Q.shown.map(function(k){return LABELS[k];}).join(" & "),
+      "Missing: "+LABELS[Q.unknown]
     ]);
   }
 
-  function drawQuantity(dir, color, labelKey){
-    if(dir.key==="PZ"||dir.key==="NZ"){
-      drawPageSymbol(dir.key==="PZ", color, labelKey);
+  function drawQuantity(dir, color, label) {
+    if (dir.key==="PZ" || dir.key==="NZ") {
+      drawPageSymbol(dir.key==="PZ", color, label);
     } else {
-      const ex = CX + dir.vec[0]*ALEN;
-      const ey = CY - dir.vec[1]*ALEN;
-      arrow(CX, CY, ex, ey, color, labelKey);
+      var ex = OX + dir.vec[0]*ALEN;
+      var ey = OY - dir.vec[1]*ALEN;
+      drawArrow(OX, OY, ex, ey, color, label);
     }
   }
 
-  function drawPageSymbol(outOfPage, color, labelKey){
-    const r = 34;
+  function drawPageSymbol(outOfPage, color, label) {
+    var r = 36;
     ctx.save();
-    ctx.shadowColor = color; ctx.shadowBlur = 20;
+    ctx.shadowColor = color; ctx.shadowBlur = 22;
     ctx.strokeStyle = color; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.arc(CX,CY,r,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(OX, OY, r, 0, Math.PI*2); ctx.stroke();
     ctx.shadowBlur = 0;
-
-    if(outOfPage){
+    if (outOfPage) {
       ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(CX,CY,10,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(OX, OY, 11, 0, Math.PI*2); ctx.fill();
     } else {
-      ctx.lineCap = "round"; ctx.lineWidth = 5; ctx.strokeStyle = color;
-      const o=15;
-      ctx.beginPath(); ctx.moveTo(CX-o,CY-o); ctx.lineTo(CX+o,CY+o); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(CX+o,CY-o); ctx.lineTo(CX-o,CY+o); ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.lineCap = "round";
+      var o = 16;
+      ctx.beginPath(); ctx.moveTo(OX-o,OY-o); ctx.lineTo(OX+o,OY+o); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(OX+o,OY-o); ctx.lineTo(OX-o,OY+o); ctx.stroke();
     }
-
-    // Place labels at fixed offsets that don't overlap
-    const offsets = { F:[60,-60], B:[-95,-60], I:[60,70] };
-    const [ox,oy] = offsets[labelKey]||[55,-55];
+    // Fixed label offsets per quantity to avoid overlap
+    var offsets = { F:[58,-58], B:[-92,-58], I:[58,70] };
+    var off = offsets[label] || [55,-55];
     ctx.fillStyle = color; ctx.font = "bold 22px Arial";
-    ctx.fillText(labelKey, CX+ox, CY+oy);
-
-    // dashed connector
-    ctx.globalAlpha=0.4; ctx.strokeStyle=color;
-    ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
-    ctx.beginPath();
-    ctx.moveTo(CX+(ox>0?r+4:-r-4), CY+(oy>0?r*0.5:-r*0.5));
-    ctx.lineTo(CX+ox-2, CY+oy-16);
-    ctx.stroke();
-    ctx.setLineDash([]); ctx.globalAlpha=1;
+    ctx.fillText(label, OX+off[0], OY+off[1]);
     ctx.restore();
   }
 
-  function arrow(x1,y1,x2,y2,color,label){
-    const ang = Math.atan2(y2-y1,x2-x1), h=18;
+  function drawArrow(x1,y1,x2,y2,color,label) {
+    var ang = Math.atan2(y2-y1, x2-x1);
+    var h = 18;
     ctx.save();
-    ctx.strokeStyle=color; ctx.lineWidth=7; ctx.lineCap="round";
+    ctx.strokeStyle = color; ctx.lineWidth = 7; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    ctx.fillStyle=color;
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(x2,y2);
+    ctx.moveTo(x2, y2);
     ctx.lineTo(x2-h*Math.cos(ang-Math.PI/7), y2-h*Math.sin(ang-Math.PI/7));
     ctx.lineTo(x2-h*Math.cos(ang+Math.PI/7), y2-h*Math.sin(ang+Math.PI/7));
     ctx.closePath(); ctx.fill();
-    ctx.font="bold 22px Arial"; ctx.fillStyle=color;
+    ctx.font = "bold 22px Arial"; ctx.fillStyle = color;
     ctx.fillText(label, x2+14, y2-14);
     ctx.restore();
   }
 
-  function clear(){
-    const g=ctx.createLinearGradient(0,0,0,H);
+  function clearCanvas() {
+    var g = ctx.createLinearGradient(0,0,0,CH);
     g.addColorStop(0,"#0f172a"); g.addColorStop(1,"#020617");
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = g; ctx.fillRect(0,0,CW,CH);
   }
 
-  function grid(){
-    ctx.save(); ctx.strokeStyle="rgba(148,163,184,.09)"; ctx.lineWidth=1;
-    for(let i=-7;i<=7;i++){
-      ctx.beginPath(); ctx.moveTo(0,CY+i*40); ctx.lineTo(W,CY+i*40); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(CX+i*58,0); ctx.lineTo(CX+i*58,H); ctx.stroke();
+  function drawGrid() {
+    ctx.save(); ctx.strokeStyle="rgba(148,163,184,.08)"; ctx.lineWidth=1;
+    for (var i=-8; i<=8; i++) {
+      ctx.beginPath(); ctx.moveTo(0,OY+i*38); ctx.lineTo(CW,OY+i*38); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(OX+i*55,0); ctx.lineTo(OX+i*55,CH); ctx.stroke();
     }
     ctx.restore();
   }
 
-  function axes(){
-    const ext=ALEN+55;
+  function drawAxes() {
+    var ext = ALEN+55;
     ctx.save();
-    ctx.strokeStyle="rgba(148,163,184,.35)"; ctx.lineWidth=2; ctx.setLineDash([6,4]);
-    ctx.beginPath(); ctx.moveTo(CX-ext,CY); ctx.lineTo(CX+ext,CY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(CX,CY-ext); ctx.lineTo(CX,CY+ext); ctx.stroke();
+    ctx.strokeStyle="rgba(148,163,184,.32)"; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(OX-ext,OY); ctx.lineTo(OX+ext,OY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(OX,OY-ext); ctx.lineTo(OX,OY+ext); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle="#64748b"; ctx.font="15px Arial";
-    ctx.fillText("+x",CX+ext-18,CY-8);
-    ctx.fillText("-x",CX-ext+4,CY-8);
-    ctx.fillText("+y",CX+8,CY-ext+18);
-    ctx.fillText("-y",CX+8,CY+ext-4);
+    ctx.fillText("+x",OX+ext-20,OY-8);
+    ctx.fillText("-x",OX-ext+4, OY-8);
+    ctx.fillText("+y",OX+8,     OY-ext+18);
+    ctx.fillText("-y",OX+8,     OY+ext-6);
     ctx.restore();
   }
 
-  function originDot(){
-    ctx.beginPath(); ctx.arc(CX,CY,5,0,Math.PI*2);
+  function drawOriginDot() {
+    ctx.beginPath(); ctx.arc(OX,OY,5,0,Math.PI*2);
     ctx.fillStyle="#e2e8f0"; ctx.fill();
   }
 
-  function title(txt){
-    ctx.fillStyle="#f8fafc"; ctx.font="bold 24px Arial";
-    ctx.fillText(txt,22,38);
-  }
-
-  function infoBox(lines){
-    const x=W-238, y=16, w=220, h=28+lines.length*22;
-    rrect(x,y,w,h,12,"rgba(11,18,32,.9)","#243244");
+  function drawInfoBox(lines) {
+    var x=CW-220, y=12, w=206, h=26+lines.length*22;
+    ctx.save();
+    ctx.fillStyle="rgba(11,18,32,.9)";
+    ctx.strokeStyle="#243244"; ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.roundRect(x,y,w,h,10);
+    ctx.fill(); ctx.stroke();
     ctx.fillStyle="#94a3b8"; ctx.font="14px Arial";
-    lines.forEach((l,i)=>ctx.fillText(l,x+12,y+26+i*21));
-  }
-
-  function rrect(x,y,w,h,r,fill,stroke){
-    ctx.save(); ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath();
-    if(fill){ctx.fillStyle=fill;ctx.fill();}
-    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke();}
+    for (var i=0;i<lines.length;i++) ctx.fillText(lines[i],x+12,y+24+i*21);
     ctx.restore();
   }
 
-})(); // end IIFE
+}); // end DOMContentLoaded
 </script>
 </body>
 </html>
